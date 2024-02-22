@@ -39,9 +39,10 @@ class UserController extends Controller
      */
     public function edit(string $id)
     {
+
         $User = User::findOrFail($id);
         return view('admin.user.edit', ['User' => $User]);
-    } 
+    }
 
     /**
      * Display the specified resource.
@@ -49,13 +50,13 @@ class UserController extends Controller
     public function show(string $id)
     {
         $ids = DB::table('consolidate_pivot')->pluck('parcel_id')->toArray();
-        $count['parcels'] = Parcel::where('user_id', $id)->orderBy('id', 'desc')->whereNull('drafted_at')->whereNotIn('id', $ids)->where('parcel_status_id','!=',5)->count();
-        $count['archived_parcels'] = Parcel::where(['user_id' => $id,'payment_status_id' => 2,'parcel_status_id' => 5])->orderBy('id', 'desc')->whereNull('drafted_at')->whereNotIn('id', $ids)->count();
+        $count['parcels'] = Parcel::where('user_id', $id)->orderBy('id', 'desc')->whereNull('drafted_at')->whereNotIn('id', $ids)->where('parcel_status_id', '!=', 5)->count();
+        $count['archived_parcels'] = Parcel::where(['user_id' => $id, 'payment_status_id' => 2, 'parcel_status_id' => 5])->orderBy('id', 'desc')->whereNull('drafted_at')->whereNotIn('id', $ids)->count();
         $count['consolidate'] = Consolidate::where('user_id', $id)->count();
-        $count['purchases'] =  Order::where('user_id', $id)->count();
-        $count['wallets'] =  Wallet::where('morphable_id', $id)->whereHasMorph('morphable', [User::class])->count();
+        $count['purchases'] = Order::where('user_id', $id)->count();
+        $count['wallets'] = Wallet::where('morphable_id', $id)->whereHasMorph('morphable', [User::class])->count();
         $wallets = Wallet::where('morphable_id', $id)->whereHasMorph('morphable', [User::class])->get();
-        $user = User::findOrFail($id); 
+        $user = User::findOrFail($id);
         $geoLocation = Location::get($user->ip);
         // $ip = "154.192.158.8"; /* Static IP address */
         // $geoLocation = Location::get($ip);
@@ -68,12 +69,14 @@ class UserController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        ini_set('max_execution_time', 500);
+        ini_set('memory_limit', '700M');
         $admin = Admin::findOrFail(\Auth::guard('admin')->id());
         $User = User::findOrFail($id);
         $template = EmailTemplate::where('slug', 'active-user')->first();
         $shortCodes = [];
         $User->email = $request->email;
-        if($User->status !== $request->status){
+        if ($User->status != $request->status) {
             // if($request->status == 1){
             //     $User->email_verified_at = Carbon::now();
             // }
@@ -83,32 +86,39 @@ class UserController extends Controller
             //      event(new UserEvent($template , $shortCodes,$User, $admin, 'DeactiveUserByAdmin')); 
             //         event(new UserEvent($template , $shortCodes,$User, $User, 'DeactiveUser')); 
             // }
-            
-             if($request->status == 1){
-                
-                $template = EmailTemplate::where('slug', 'active-user')->first();
-                if ($template) {
-                    $shortCodes = [];
-                    event(new UserEvent($template , $shortCodes,$User, $admin,  'ActiveUserByAdmin')); 
-                   
-                    event(new UserEvent($template , $shortCodes,$User, $User, 'ActiveUser')); 
 
+            if ($request->status == 1) {
+                //Notifictaion to Admin
+                $template1 = EmailTemplate::where('slug', 'ActiveUserByAdmin')->first();
+                $loginUrl = route('login');
+                if ($template) {
+                    $shortCodes = [
+                        'NAME' => $admin->first_name . ' ' . $admin->last_name,
+                        'Username' => $User->first_name . ' ' . $User->last_name,
+                    ];
+                    event(new UserEvent($template1, $shortCodes, $User, $admin, 'ActiveUserByAdmin'));
+                    //Notifictaion to User
+                    $template = EmailTemplate::where('slug', 'active-user')->first();
+                    $shortCodes = [
+                        'NAME' => $User->first_name . ' ' . $User->last_name,
+                        'Login_Url' => $loginUrl
+                    ];
+                    event(new UserEvent($template, $shortCodes, $User, $User, 'ActiveUser'));
                 } else {
-                        $notify = [
-                                'error' => "Something went wrong contact your admin.",
-                            ];
+                    $notify = [
+                        'error' => "Something went wrong contact your admin.",
+                    ];
                 }
             }
 
             $User->status = $request->status;
         }
-        
-        
-        
+
+
+
 
         $User->save();
-
-        $template = EmailTemplate::where('slug', 'update-user')->first();
+        // $template = EmailTemplate::where('slug', 'update-user')->first();
 
         // if ($template) {
 
@@ -144,7 +154,6 @@ class UserController extends Controller
     public function data(Request $var = null)
     {
         $data = User::get();
-
         return Datatables::of($data)
             ->addIndexColumn()
             ->addColumn('action', function ($row) {
@@ -174,8 +183,8 @@ class UserController extends Controller
                 $html = "<a href='" . route('user.val.show', [$row->id]) . "'>" . $fullName . " / " . $customerNo . "</a>";
                 return $html;
             })
-             ->addColumn('status', function ($row) {
-                if ($row->status==1) {
+            ->addColumn('status', function ($row) {
+                if ($row->status == 1) {
                     $status = 'Active';
                 } else {
                     $status = 'In Active';
@@ -185,7 +194,7 @@ class UserController extends Controller
             })
             ->addColumn('invite_no', function ($row) {
                 if (!is_null($row->invite_no)) {
-                    return  $row->invite_no;
+                    return $row->invite_no;
                 } else {
                     return 'N/A ';
                 }

@@ -8,27 +8,28 @@ use App\Models\EmailTemplate;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use App\Models\User;
+use App\Traits\SmtpTrait;
 
 class ActivatedUserNotification extends Notification
 {
-    use Queueable;
+    use Queueable, SmtpTrait;
     // ,SmtpTrait
     protected $template;
 
     protected $user;
-    
+
     protected $shortCodes;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct(EmailTemplate $template = null , $shortCodes = [],$user = null)
+    public function __construct(EmailTemplate $template = null, $shortCodes = [], $user = null)
     {
         $this->user = $user;
 
         $this->template = $template;
-        
-        $this->shortCodes = $shortCodes; 
+
+        $this->shortCodes = $shortCodes;
     }
 
     /**
@@ -38,7 +39,7 @@ class ActivatedUserNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', 'mail'];
     }
 
     /**
@@ -46,10 +47,10 @@ class ActivatedUserNotification extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $body = shortCodeBodyReplacer($this->template->body, $this->shortCodes, $notifiable);
         return (new MailMessage)
-                    ->line('The introduction to the notification.')
-                    ->action('Notification Action', url('/'))
-                    ->line('Thank you for using our application!');
+            ->subject($this->template->subject)
+            ->view('admin.emails.email.custom', ['body' => $body]);
     }
 
     /**
@@ -61,8 +62,8 @@ class ActivatedUserNotification extends Notification
     {
         return [
             'data' => $this->user->toArray(),
-            'type' => 'User' ,
-            'created_by' => 1 ,
+            'type' => 'User',
+            'created_by' => 1,
         ];
     }
 }
