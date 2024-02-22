@@ -147,7 +147,7 @@ class ConsolidateController extends Controller
             event(new ConsolidateEvent($template, $shortCodes, $Consolidate, $admin, 'CreateConsolidate'));
 
             //Send notification to user
-            // event(new ConsolidateEvent($template, $shortCodes, $Consolidate, $user, 'CreateConsolidate'));
+            event(new ConsolidateEvent($template, $shortCodes, $Consolidate, $user, 'CreateConsolidate'));
 
         } else {
 

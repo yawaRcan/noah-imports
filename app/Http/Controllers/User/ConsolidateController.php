@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\User;
 
+use App\Events\ConsolidateEvent;
 use App\Models\EmailTemplate;
 use App\Models\User;
 use App\Models\Admin;
