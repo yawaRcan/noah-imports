@@ -1,0 +1,22 @@
+
+
+@media print {
+    /* Hide page title */
+    h1 {
+        display: none;
+    }
+    /* Hide header titles */
+.header-title {
+    display: none !important;
+}
+
+/* Hide time */
+.time {
+    display: none !important;
+}
+
+/* Hide footer links */
+.footer-link {
+    display: none !important;
+}
+}
