@@ -2,16 +2,22 @@
 
 namespace App\Http\Controllers\Admin\Auth;
 
+use App\Events\UserEvent;
 use App\Models\Admin;
+use App\Models\EmailTemplate;
 use Illuminate\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Auth\Events\Registered;
 use App\Providers\RouteServiceProvider;
+use App\Http\Requests\Auth\RegisterRequest;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Config;
 
 class RegisteredUserController extends Controller
 {
@@ -53,10 +59,47 @@ class RegisteredUserController extends Controller
             'theme' => 2,
         ]);
 
-        event(new Registered($user));
+        // event(new Registered($user));
+        $template = EmailTemplate::where('slug', 'registration-user')->first();
+        $template2 = EmailTemplate::where('slug', 'admin-registeration')->first();
+
+        if ($template) {
+            $verificationUrl = $this->verificationUrl($user);
+            $shortCodes = [
+                'VERIFY_URL' => $verificationUrl
+            ];
+            //Send notification to user 	admin-registeration
+            event(new UserEvent($template, $shortCodes, $user, $user, 'RegisterUser'));
+        }
+        if ($template2) {
+            $shortCodes = [
+                'NAME' => $user->first_name . ' ' . $user->last_name,
+                'USERNAME' => $user->username,
+                'PASSWORD' => $request->password
+            ];
+            event(new UserEvent($template2, $shortCodes, $user, $user, 'RegisterUser'));
+        }
 
         Auth::guard('admin')->login($user);
 
         return redirect(RouteServiceProvider::Admin);
+    }
+
+    /**
+     * Get the verification URL for the given notifiable.
+     *
+     * @param  mixed  $notifiable
+     * @return string
+     */
+    protected function verificationUrl($notifiable)
+    {
+        return URL::temporarySignedRoute(
+            'verification.verify',
+            Carbon::now()->addMinutes(Config::get('auth.verification.expire', 60)),
+            [
+                'id' => $notifiable->getKey(),
+                'hash' => sha1($notifiable->getEmailForVerification()),
+            ]
+        );
     }
 }
