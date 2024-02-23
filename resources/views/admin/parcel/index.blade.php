@@ -2,10 +2,6 @@
 
 @section('content')
 <style type="text/css">
-    body {
-        margin-top: 20px;
-    }
-
     .steps .step {
         display: block;
         width: 100%;

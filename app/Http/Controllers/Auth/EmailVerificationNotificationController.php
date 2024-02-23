@@ -10,7 +10,7 @@ use App\Models\EmailTemplate;
 use App\Events\UserEvent;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Hash;  
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Config;
 
 class EmailVerificationNotificationController extends Controller
@@ -26,16 +26,16 @@ class EmailVerificationNotificationController extends Controller
 
         // $request->user()->sendEmailVerificationNotification();
         $template = EmailTemplate::where('slug', 'registration-user')->first();
-        
+
         if ($template) {
-            $user = $request->user();       
+            $user = $request->user();
             $verificationUrl = $this->verificationUrl($user);
             $shortCodes = [
-                'verify_url' => $verificationUrl
+                'VERIFY_URL' => $verificationUrl
             ];
 
             //Send notification to user
-            event(new UserEvent($template , $shortCodes, $user, $user, 'RegisterUser')); 
+            event(new UserEvent($template, $shortCodes, $user, $user, 'RegisterUser'));
 
         }
 

@@ -270,7 +270,7 @@
           <div class="row">
 
             @foreach($data['branches'] as $branch)
-            <div class="col-lg-6 d-flex align-items-stretch">
+            <div class="col-lg-12 d-flex align-items-stretch">
                 <div class="card w-100">
                     <div class="card-header">
                         <h3>{{$branch->name ?? 'N/A'}} Branch Information</h3>
@@ -448,7 +448,7 @@
             </div>
         </div>
         <!-- Column -->
-    </div>
+   
             <!-- Row -->
             <div class="row">
                 <div class="col-lg-12">
@@ -570,12 +570,12 @@
             <!-- Row -->
             <!-- Row -->
             <div class="row">
-                <div class="col-lg-6 d-flex align-items-stretch">
+                <div class="col-lg-5 d-flex align-items-stretch">
                     <div class="card w-100">
                         <div class="card-body">
                             <h4 class="card-title">Recent Transactions</h4>
-                             <div class="table table-responsive">
-                            <table class="table table-responsive table-striped">
+                             <div class=" table-responsive">
+                            <table class="table  table-striped">
                                 <thead>
                                     <th>User</th>
                                     <th>Transaction Type</th>
@@ -602,12 +602,12 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-lg-6 d-flex align-items-stretch">
+                <div class="col-lg-7 d-flex align-items-stretch">
                     <div class="card w-100">
                         <div class="card-body">
                             <h4 class="card-title">Recent Pending Purchase</h4>
-                            <div class="table table-responsive">
-                            <table class="table table-responsive table-striped">
+                            <div class="table-responsive">
+                            <table class="table table-striped">
                                 <thead>
                                     <th>Order #</th>
                                     <th>Reciever</th>
@@ -627,7 +627,7 @@
                                         </tr>
                                         
                                     @empty
-                                        <td colspan="4" class="text-center">No Data Available</td>
+                                        <td colspan="5" class="text-center">No Data Available</td>
                                     @endforelse
                                 </tbody>
                             </table>

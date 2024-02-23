@@ -381,7 +381,6 @@ class ConsolidateController extends Controller
         $Consolidate->shipment_mode_id = $request->shipment_mode;
 
         if (isset($request->parcel_status) && $Consolidate->parcel_status_id != $request->parcel_status) {
-
             $Consolidate->parcel_status_id = $request->parcel_status;
 
             $statusFlag = 1;
@@ -389,7 +388,6 @@ class ConsolidateController extends Controller
         } else {
             $statusFlag = 0;
         }
-
         $Consolidate->payment_status_id = $request->payment_status;
 
         $Consolidate->external_tracking = $request->external_tracking;
@@ -417,27 +415,49 @@ class ConsolidateController extends Controller
 
         $user = User::findOrFail($Consolidate->user_id);
 
-        $template = EmailTemplate::where('slug', 'update-consolidate')->first();
+        if (isset($request->parcel_status) && $statusFlag == 5) {
+            $templateD = EmailTemplate::where('slug', 'delivered-consolidate')->first();
+            if ($templateD) {
+                dd('no delivered');
+                $shortCodes = [
+                    'NAME' => $user->first_name . ' ' . $user->last_name,
+                    'tracking_no' => $Consolidate->external_tracking,
+                    'delivery_time' => $Consolidate->es_delivery_date,
+                    'consolidate_status' => $Consolidate->parcelStatus->name,
+                    'invoice_url' => route('consolidate.invoice', ['id' => $Consolidate->id]),
 
-        if ($template) {
 
-            $shortCodes = [
-                'tracking_no' => $Consolidate->external_tracking,
-                'delivery_time' => $Consolidate->es_delivery_date,
-                'invoice_url' => route('consolidate.invoice', ['id' => $Consolidate->id]),
-            ];
-
-            //Send notification to user
-            event(new ConsolidateEvent($template, $shortCodes, $Consolidate, $admin, 'UpdateConsolidate'));
-
-            event(new ConsolidateEvent($template, $shortCodes, $Consolidate, $user, 'UpdateConsolidate'));
-
+                ];
+                event(new ConsolidateEvent($templateD, $shortCodes, $Consolidate, $user, 'UpdateConsolidate'));
+            }
         } else {
+            $template = EmailTemplate::where('slug', 'update-consolidate')->first();
 
-            $notify = [
-                'error' => "Something went wrong contact your admin.",
-            ];
+            if ($template) {
+
+                $shortCodes = [
+                    'NAME' => $user->first_name . ' ' . $user->last_name,
+                    'tracking_no' => $Consolidate->external_tracking,
+                    'consolidate_status' => $Consolidate->parcelStatus->name,
+                    'delivery_time' => $Consolidate->es_delivery_date,
+                    'invoice_url' => route('consolidate.invoice', ['id' => $Consolidate->id]),
+                    'comment' => ($Consolidate->comment != null ? $Consolidate->comment : 'no comment'),
+
+                ];
+
+                //Send notification to user
+                event(new ConsolidateEvent($template, $shortCodes, $Consolidate, $admin, 'UpdateConsolidate'));
+
+                event(new ConsolidateEvent($template, $shortCodes, $Consolidate, $user, 'UpdateConsolidate'));
+
+            } else {
+
+                $notify = [
+                    'error' => "Something went wrong contact your admin.",
+                ];
+            }
         }
+
 
 
 
