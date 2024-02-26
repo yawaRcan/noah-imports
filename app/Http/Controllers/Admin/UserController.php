@@ -72,21 +72,22 @@ class UserController extends Controller
         ini_set('max_execution_time', 500);
         ini_set('memory_limit', '700M');
         $admin = Admin::findOrFail(\Auth::guard('admin')->id());
+        $User = User::where('id', $id)->update([
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
+            'username' => $request->username,
+            'email' => $request->email,
+            'company' => $request->company,
+            'gender' => $request->gender,
+            'country_code' => $request->country,
+            'dob' => $request->dob,
+            'phone' => $request->phone,
+        ]);
         $User = User::findOrFail($id);
         $template = EmailTemplate::where('slug', 'active-user')->first();
         $shortCodes = [];
         $User->email = $request->email;
         if ($User->status != $request->status) {
-            // if($request->status == 1){
-            //     $User->email_verified_at = Carbon::now();
-            // }
-            // if($request->status == 0){
-            //     $User->email_verified_at = null;
-            //     //  event(new UserEvent($template , $shortCodes,$User, $admin, 'DeactiveUserByAdmin')); 
-            //      event(new UserEvent($template , $shortCodes,$User, $admin, 'DeactiveUserByAdmin')); 
-            //         event(new UserEvent($template , $shortCodes,$User, $User, 'DeactiveUser')); 
-            // }
-
             if ($request->status == 1) {
                 //Notifictaion to Admin
                 $template1 = EmailTemplate::where('slug', 'ActiveUserByAdmin')->first();
@@ -115,6 +116,20 @@ class UserController extends Controller
                         'error' => "Something went wrong contact your admin.",
                     ];
                 }
+            } else {
+                // When account is Deactivivated
+                $template = EmailTemplate::where('slug', 'InActiveUser')->first();
+                if ($template) {
+                    $shortCodes = [
+                        'NAME' => $admin->first_name . ' ' . $admin->last_name,
+                        'Username' => $User->first_name . ' ' . $User->last_name,
+                        'phone' => $User->phone,
+                        'email' => $User->email,
+                        'user_image' => $User->image,
+                    ];
+                    event(new UserEvent($template, $shortCodes, $User, $User, 'ActiveUser'));
+                }
+
             }
 
             $User->status = $request->status;

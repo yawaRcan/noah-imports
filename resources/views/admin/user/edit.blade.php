@@ -2,23 +2,23 @@
     @csrf 
     <div class="mb-3">
         <label>First name</label>
-        <input type="text" class="form-control" name="first_name" value="{{$User->first_name}}" readonly>
+        <input type="text" class="form-control" name="first_name" value="{{$User->first_name}}">
     </div>
     <div class="mb-3">
         <label>Last name</label>
-        <input type="text" class="form-control" name="last_name" value="{{$User->last_name}}" readonly>
+        <input type="text" class="form-control" name="last_name" value="{{$User->last_name}}">
     </div>
     <div class="mb-3">
         <label>Username</label>
-        <input type="text" class="form-control" name="username" value="{{$User->username}}" readonly>
+        <input type="text" class="form-control" name="username" value="{{$User->username}}">
     </div>
     <div class="mb-3">
         <label>Company</label>
-        <input type="text" class="form-control" name="company" value="{{$User->company}}" readonly>
+        <input type="text" class="form-control" name="company" value="{{$User->company}}">
     </div>
     <div class="mb-3">
         <label>Gender</label>
-         <select name="gender" class="form-control" id="gender_id" disabled>
+         <select name="gender" class="form-control" id="gender_id" >
           <option value="">Select Gender</option>
           <option value="0" {{$User->gender == 0 ? 'selected': ''}}>Male</option>
           <option value="1" {{$User->gender == 1 ? 'selected': ''}}>Female</option>
@@ -26,7 +26,7 @@
     </div>
     <div class="mb-3">
         <label>Country</label>
-         <select name="country" class="form-control" id="country_id" disabled>
+         <select name="country" class="form-control" id="country_id">
             <option value="">Select Country</option>
             @foreach($countries as $key => $name)
                  <option value="{{$key}}" {{$User->country_id == $key ? 'selected' : ''}}>{{$name}}</option>
@@ -35,11 +35,11 @@
     </div>
     <div class="mb-3">
         <label>Date of Birth</label>
-        <input type="date" class="form-control" name="dob" value="{{$User->dob}}" readonly>
+        <input type="date" class="form-control" name="dob" value="{{$User->dob}}">
     </div>
     <div class="mb-3">
         <label>Phone Number</label>
-        <input type="tel" class="form-control" id="contact_no" name="phone" value="{{$User->phone}}" readonly>
+        <input type="tel" class="form-control" id="contact_no" name="phone" value="{{$User->phone}}">
     </div>
     <div class="mb-3">
         <label>Email Address</label>

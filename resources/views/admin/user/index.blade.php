@@ -204,7 +204,10 @@
         let ModalId = "#ni-user-edit";
         let formId = "#user-edit-form";
         let type = "PUT";
-        updateFormAjax(url, type, formId, ModalId, table)
+        $("#ni-user-edit").modal('hide');
+        $("#user-edit-form").modal('hide');
+        updateFormAjax(url, type, formId, ModalId, table);
+        
 
     })
 
