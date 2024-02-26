@@ -9,12 +9,12 @@ use App\Events\UserCreated;
 use Illuminate\View\View;
 use Illuminate\Http\Request;
 use App\Models\EmailTemplate;
-use Illuminate\Support\Carbon; 
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\URL;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;  
-use Illuminate\Support\Facades\Config; 
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Config;
 use App\Http\Requests\Auth\RegisterRequest;
 
 class RegisteredUserController extends Controller
@@ -27,26 +27,26 @@ class RegisteredUserController extends Controller
         return view('auth.register');
     }
 
-        // Function to get the client IP address
-        public function get_client_ip()
-        {
-            $ipaddress = '';
-            if (getenv('HTTP_CLIENT_IP'))
-                $ipaddress = getenv('HTTP_CLIENT_IP');
-            else if (getenv('HTTP_X_FORWARDED_FOR'))
-                $ipaddress = getenv('HTTP_X_FORWARDED_FOR');
-            else if (getenv('HTTP_X_FORWARDED'))
-                $ipaddress = getenv('HTTP_X_FORWARDED');
-            else if (getenv('HTTP_FORWARDED_FOR'))
-                $ipaddress = getenv('HTTP_FORWARDED_FOR');
-            else if (getenv('HTTP_FORWARDED'))
-                $ipaddress = getenv('HTTP_FORWARDED');
-            else if (getenv('REMOTE_ADDR'))
-                $ipaddress = getenv('REMOTE_ADDR');
-            else
-                $ipaddress = 'UNKNOWN';
-            return $ipaddress;
-        }
+    // Function to get the client IP address
+    public function get_client_ip()
+    {
+        $ipaddress = '';
+        if (getenv('HTTP_CLIENT_IP'))
+            $ipaddress = getenv('HTTP_CLIENT_IP');
+        else if (getenv('HTTP_X_FORWARDED_FOR'))
+            $ipaddress = getenv('HTTP_X_FORWARDED_FOR');
+        else if (getenv('HTTP_X_FORWARDED'))
+            $ipaddress = getenv('HTTP_X_FORWARDED');
+        else if (getenv('HTTP_FORWARDED_FOR'))
+            $ipaddress = getenv('HTTP_FORWARDED_FOR');
+        else if (getenv('HTTP_FORWARDED'))
+            $ipaddress = getenv('HTTP_FORWARDED');
+        else if (getenv('REMOTE_ADDR'))
+            $ipaddress = getenv('REMOTE_ADDR');
+        else
+            $ipaddress = 'UNKNOWN';
+        return $ipaddress;
+    }
 
     /**
      * Handle an incoming registration request.
@@ -61,9 +61,9 @@ class RegisteredUserController extends Controller
             $id = $id + 1;
         } else {
             $id = 1;
-        } 
-   
-        $dob = $request->year.'-'.$request->month.'-'.$request->day;
+        }
+
+        $dob = $request->year . '-' . $request->month . '-' . $request->day;
         $user = User::create([
             'country_id' => $request->country_id,
             'first_name' => $request->first_name,
@@ -71,7 +71,7 @@ class RegisteredUserController extends Controller
             'username' => $request->username,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'phone' => $request->phone,
+            'phone' => $request->contact_no,
             'customer_no' => general_setting('setting')->customer_no . $id,
             'initial_country' => $request->initial_country,
             'country_code' => $request->country_code,
@@ -87,35 +87,35 @@ class RegisteredUserController extends Controller
         ]);
         // event(new Registered($user));
         $template = EmailTemplate::where('slug', 'registration-user')->first();
-        
-        
-        if ($template) {       
-          
+
+
+        if ($template) {
+
             $verificationUrl = $this->verificationUrl($user);
             $shortCodes = [
                 'VERIFY_URL' => $verificationUrl
             ];
             // return $this->verificationUrl($user);
-         
+
             //Send notification to user
-           $admin=Admin::first(); 
-          // $event= event(new UserCreated($template , $shortCodes, $user, $admin, 'RegisterUser'));
-           $event= event(new UserEvent($template , $shortCodes, $user, $user, 'RegisterUser'));
-         
+            $admin = Admin::first();
+            // $event= event(new UserCreated($template , $shortCodes, $user, $admin, 'RegisterUser'));
+            $event = event(new UserEvent($template, $shortCodes, $user, $user, 'RegisterUser'));
+
         }
-      
+
 
         $view = view('auth.ajax.register-modal')->render();
         $notify = [
             'success' => "Successfully registered.",
-            'html' => $view,  
-        ]; 
-        return $notify; 
+            'html' => $view,
+        ];
+        return $notify;
         // Auth::login($user);
-        
+
         // if (Auth::check()) {
         //     $user = Auth::guard('web')->user();
-           
+
         // }
         //else{
         //     $notify = [
@@ -123,7 +123,7 @@ class RegisteredUserController extends Controller
         //     ]; 
         //     return $notify;
         // }
-       
+
     }
 
     /**
