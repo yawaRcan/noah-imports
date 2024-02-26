@@ -95,6 +95,8 @@ class UserController extends Controller
                     $shortCodes = [
                         'NAME' => $admin->first_name . ' ' . $admin->last_name,
                         'Username' => $User->first_name . ' ' . $User->last_name,
+                        'email' => $admin->email,
+                        'phone' => $admin->phone,
                         'Login_Url' => $loginUrl
                     ];
                     event(new UserEvent($template1, $shortCodes, $User, $admin, 'ActiveUserByAdmin'));
@@ -102,7 +104,10 @@ class UserController extends Controller
                     $template = EmailTemplate::where('slug', 'active-user')->first();
                     $shortCodes = [
                         'Username' => $User->first_name . ' ' . $User->last_name,
-                        'Login_Url' => $loginUrl
+                        'Login_Url' => $loginUrl,
+                        'phone' => $User->phone,
+                        'email' => $User->email,
+                        'user_image' => $User->image,
                     ];
                     event(new UserEvent($template, $shortCodes, $User, $User, 'ActiveUser'));
                 } else {
