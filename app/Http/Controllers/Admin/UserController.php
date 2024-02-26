@@ -91,16 +91,17 @@ class UserController extends Controller
                 //Notifictaion to Admin
                 $template1 = EmailTemplate::where('slug', 'ActiveUserByAdmin')->first();
                 $loginUrl = route('login');
-                if ($template) {
+                if ($template1) {
                     $shortCodes = [
                         'NAME' => $admin->first_name . ' ' . $admin->last_name,
                         'Username' => $User->first_name . ' ' . $User->last_name,
+                        'Login_Url' => $loginUrl
                     ];
                     event(new UserEvent($template1, $shortCodes, $User, $admin, 'ActiveUserByAdmin'));
                     //Notifictaion to User
                     $template = EmailTemplate::where('slug', 'active-user')->first();
                     $shortCodes = [
-                        'NAME' => $User->first_name . ' ' . $User->last_name,
+                        'Username' => $User->first_name . ' ' . $User->last_name,
                         'Login_Url' => $loginUrl
                     ];
                     event(new UserEvent($template, $shortCodes, $User, $User, 'ActiveUser'));

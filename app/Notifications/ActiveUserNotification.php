@@ -32,7 +32,6 @@ class ActiveUserNotification extends Notification implements ShouldQueue
         $this->user = $user;
 
         $this->template = $template;
-
         $this->shortCodes = $shortCodes;
         $this->setMailConfigs();
     }

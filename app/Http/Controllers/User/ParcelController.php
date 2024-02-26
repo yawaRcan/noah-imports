@@ -70,7 +70,7 @@ class ParcelController extends Controller
 
     public function index()
     {
-        
+
         $config = 'all';
         $drafted = null;
         $title = 'All Parcels';
@@ -80,14 +80,15 @@ class ParcelController extends Controller
 
     public function pendingParcels()
     {
-       
+
         $config = ConfigStatus::where('name', 'pending')->orWhere('name', 'Pending')->first()->id;
 
         $title = 'Pending Parcels';
         return view('user.parcel.index', ['status' => $config, 'drafted' => null, 'title' => $title]);
     }
 
-    public function addReceipt(Request $request){
+    public function addReceipt(Request $request)
+    {
         $parcel = Parcel::findOrFail($request->parchase_id);
         $parcel->order_invoice_status = 1;
         $parcel->payment_receipt = $this->fileUpload($request->payment_file);
@@ -107,15 +108,15 @@ class ParcelController extends Controller
      */
     public function create()
     {
-      
+
         $shipmentAddress = ShippingAddress::whereHasMorph('morphable', [Admin::class])->get();
         $reciver = ShippingAddress::whereHasMorph('morphable', [User::class])
             ->where('morphable_id', Auth::guard('web')->user()->id)->pluck('address', 'id')->toArray();
-          
+
         $paymentStatuses = PaymentStatus::get();
         return view('user.parcel.add', compact('shipmentAddress', 'reciver', 'paymentStatuses'));
     }
-   
+
 
     /**
      * Display the specified resource.
@@ -144,11 +145,11 @@ class ParcelController extends Controller
 
         $aftershipStatus = general_setting('aftership')->status;
 
-        if($aftershipStatus == 'on'){
-            $onlineTracking =  $this->aftershipService->viewLabel($parcel->externalShipper->slug, $parcel->external_tracking);
+        if ($aftershipStatus == 'on') {
+            $onlineTracking = $this->aftershipService->viewLabel($parcel->externalShipper->slug, $parcel->external_tracking);
             // dd($onlineTracking);
             $lastIndex = count($onlineTracking['data']['checkpoints']) - 1;
-            
+
             foreach ($onlineStatuses as $key => $value) {
                 if ($value['status'] == $onlineTracking['data']['tag']) {
                     $statusValue = $value['value'];
@@ -200,7 +201,7 @@ class ParcelController extends Controller
 
         $totalConverted = array_sum($total);
 
-        return  view('user.parcel.calculator', compact('total', 'totalConverted', 'parcels'))->render();
+        return view('user.parcel.calculator', compact('total', 'totalConverted', 'parcels'))->render();
     }
 
 
@@ -271,7 +272,7 @@ class ParcelController extends Controller
 
         $parcels->sender_address_id = $request->sender_ship_address;
 
-        $parcels->branch_id = $this->branch =  $request->branch_id;
+        $parcels->branch_id = $this->branch = $request->branch_id;
 
         $parcels->from_country_id = $request->from_country;
 
@@ -296,9 +297,9 @@ class ParcelController extends Controller
 
         $parcels->weight = $this->weight = (isset($request->weight) ? $request->weight : 0);
 
-        $parcels->length = $this->length =  (isset($request->length_inch) ? $request->length_inch : 0);
+        $parcels->length = $this->length = (isset($request->length_inch) ? $request->length_inch : 0);
 
-        $parcels->width =  $this->width = (isset($request->width_inch) ? $request->width_inch : 0);
+        $parcels->width = $this->width = (isset($request->width_inch) ? $request->width_inch : 0);
 
         $parcels->height = $this->height = (isset($request->height_inch) ? $request->height_inch : 0);
 
@@ -339,13 +340,13 @@ class ParcelController extends Controller
 
         $parcels->payment_receipt = $this->fileUpload($request->payment_file);
         // if($request->payment_file)
-        if($request->hasFile('payment_file')){
-          
-            $parcels->order_invoice_status=1;
+        if ($request->hasFile('payment_file')) {
+
+            $parcels->order_invoice_status = 1;
         }
         $parcels->comment = $request->comment;
 
-        $parcels->amount_total =  $total['total'];
+        $parcels->amount_total = $total['total'];
 
         $aftershipStatus = general_setting('aftership')->status;
 
@@ -394,8 +395,9 @@ class ParcelController extends Controller
             $notification = new ShipmentCreateNotification(
                 $template,
                 [
+                    'sender_name' => $user->first_name . " " . $user->last_name,
                     'tracking_no' => $parcels->external_tracking,
-                    'delivery_time' =>  $parcels->es_delivery_date,
+                    'delivery_time' => $parcels->es_delivery_date,
                     'invoice_url' => route('parcel.invoice', ['id' => $parcels->id]),
                 ]
             );
@@ -423,7 +425,7 @@ class ParcelController extends Controller
     public function parcelData(Request $request)
     {
 
-        $parcel =  Parcel::where('external_tracking', $request->tracking)->first();
+        $parcel = Parcel::where('external_tracking', $request->tracking)->first();
 
         if ($parcel) {
 
@@ -449,8 +451,8 @@ class ParcelController extends Controller
         $deliveryDate = date('Y-m-d', strtotime($parcels->es_delivery_date));
 
         $phone = '+' . $parcels->reciever->country_code . $parcels->reciever->phone;
-        return  [
-            'tracking_number' =>  $parcels->external_tracking,
+        return [
+            'tracking_number' => $parcels->external_tracking,
             'title' => 'Parcel Shipment',
             'customer_name' => $parcels->full_name,
             'destination_country_iso2' => $parcels->toCountry->code,
@@ -472,7 +474,7 @@ class ParcelController extends Controller
             "pickup_location" => "Flagship Store",
             'slug' => $parcels->externalShipper->slug, // Carrier slug e.g. 'ups', 'fedex', 'dhl'
             "pickup_note" => $parcels->comment,
-            "note" =>  $parcels->comment,
+            "note" => $parcels->comment,
             'origin_country_iso3' => $parcels->sender->country->iso3,
             "origin_state" => $parcels->sender->state,
             "origin_city" => $parcels->sender->city,
@@ -492,7 +494,7 @@ class ParcelController extends Controller
 
         if ($type == 'air-freight') {
 
-            $this->branch =  $branch_id;
+            $this->branch = $branch_id;
 
             $this->weight = $actual_weight;
 
@@ -642,9 +644,9 @@ class ParcelController extends Controller
 
         $parcels->weight = $this->weight = (isset($request->weight) ? $request->weight : 0);
 
-        $parcels->length = $this->length =  (isset($request->length_inch) ? $request->length_inch : 0);
+        $parcels->length = $this->length = (isset($request->length_inch) ? $request->length_inch : 0);
 
-        $parcels->width =  $this->width = (isset($request->width_inch) ? $request->width_inch : 0);
+        $parcels->width = $this->width = (isset($request->width_inch) ? $request->width_inch : 0);
 
         $parcels->height = $this->height = (isset($request->height_inch) ? $request->height_inch : 0);
 
@@ -785,7 +787,7 @@ class ParcelController extends Controller
 
         if (count($users) > 0) {
 
-            foreach ($users as  $user) {
+            foreach ($users as $user) {
 
                 $arr[] = (object) [
 
@@ -826,21 +828,21 @@ class ParcelController extends Controller
 
             if ($address->count() == 0) {
 
-                $arr  =  [
+                $arr = [
                     'error' => "Sorry, there is no address found for this user. Click Add Reciver Address to add address for user.",
                     'full_name' => $user->first_name . ' ' . $user->last_name,
-                    'addresses' =>  $address->get(),
+                    'addresses' => $address->get(),
                 ];
             } else {
 
-                $arr =  [
+                $arr = [
                     'error' => null,
                     'full_name' => $user->first_name . ' ' . $user->last_name,
-                    'addresses' =>  $address->get(),
+                    'addresses' => $address->get(),
                 ];
             }
         }
-        return  $arr;
+        return $arr;
     }
 
     public function getRecieverhtml()
@@ -851,44 +853,46 @@ class ParcelController extends Controller
 
     public function getPaymentHtml($id)
     {
-        
+
         $payment = Parcel::select('id', 'payment_receipt')->where('id', $id)->first();
         return view('user.parcel.payment', ['payment' => $payment]);
     }
     public function getPaymentStatusHtml($id)
     {
-         
-      
-        $parcel = Parcel::select('id', 'invoice_payment_receipt','payment_id')->where('id', $id)->first();
-        $paymentMethods = Payment::where('slug', 'not like', "%account-funds%")->where('status','active')->pluck('name','id')->toArray();
-      
-        return view('user.parcel.payment-status', ['parcel' => $parcel,'paymentMethods'=>  $paymentMethods]);
+
+
+        $parcel = Parcel::select('id', 'invoice_payment_receipt', 'payment_id')->where('id', $id)->first();
+        $paymentMethods = Payment::where('slug', 'not like', "%account-funds%")->where('status', 'active')->pluck('name', 'id')->toArray();
+
+        return view('user.parcel.payment-status', ['parcel' => $parcel, 'paymentMethods' => $paymentMethods]);
     }
-    public function addPaymentInvoice($id){
+    public function addPaymentInvoice($id)
+    {
 
         $parcel = Parcel::select('id', 'payment_receipt')->where('id', $id)->first();
-        $paymentMethods = Payment::where('slug', 'not like', "%account-funds%")->where('status','active')->pluck('name','id')->toArray();
-        return view('user.parcel.add-payment-invoice', ['parcel' => $parcel,'paymentMethods'=>  $paymentMethods]);
+        $paymentMethods = Payment::where('slug', 'not like', "%account-funds%")->where('status', 'active')->pluck('name', 'id')->toArray();
+        return view('user.parcel.add-payment-invoice', ['parcel' => $parcel, 'paymentMethods' => $paymentMethods]);
     }
-    public function updatePaymentStatus(Request $request){
-        
+    public function updatePaymentStatus(Request $request)
+    {
+
         $validated = $request->validate([
             'payment_method' => 'required',
-            'payment_file'=> 'mimes:jpeg,jpg,png,gif|max:1000', 
+            'payment_file' => 'mimes:jpeg,jpg,png,gif|max:1000',
         ]);
-    
+
         $parcel = Parcel::with('parcelStatus')->findOrFail($request->parcelId);
-        
+
         $parcel->invoice_payment_receipt = $this->fileUpload($request->payment_file);
-        $parcel->payment_id=$request->payment_method; 
-        $parcel->payment_status_id=1;
+        $parcel->payment_id = $request->payment_method;
+        $parcel->payment_status_id = 1;
         $parcel->save();
-        
 
-        
-        
 
-    
+
+
+
+
 
         $notify = [
             'success' => "Parcel has been Updated.",
@@ -899,46 +903,46 @@ class ParcelController extends Controller
         return $notify;
 
     }
-    
+
 
     public function getParcelTracking($id)
     {
         $parcel = Parcel::findOrFail($id);
-     
 
 
-        $param =   
-        [
-        
-        'carrier_id'=> $parcel->externalShipper->slug,               // the carrier code, you can find from https://app.kd100.com/api-management
-        'tracking_number' =>$parcel->external_tracking,
-        //'9926933413',    
-        // The tracking number you want to query
-        'phone' => '',                        // Phone number
-        'ship_from' => '',                    // City of departure
-        'ship_to' => '',                      // Destination city
-        'area_show' => 1,                     // 0: close (default); 1: return data about area_name, location, order_status_description
-        'order' => 'desc'                     // Sorting of returned results: desc - descending (default), asc - ascending
-        ];
 
-    // Request Json
-    $key='BpRXHMUFjCdp1609';
-    $secret='e58ea39bb36643288a214aeff5c053f1';
-    $json = json_encode($param, JSON_UNESCAPED_UNICODE);
-    $signature = strtoupper(md5($json.$key.$secret));
+        $param =
+            [
 
-    $url = 'https://www.kd100.com/api/v1/tracking/realtime';    // Real-time shipment tracking request address
+                'carrier_id' => $parcel->externalShipper->slug,               // the carrier code, you can find from https://app.kd100.com/api-management
+                'tracking_number' => $parcel->external_tracking,
+                //'9926933413',    
+                // The tracking number you want to query
+                'phone' => '',                        // Phone number
+                'ship_from' => '',                    // City of departure
+                'ship_to' => '',                      // Destination city
+                'area_show' => 1,                     // 0: close (default); 1: return data about area_name, location, order_status_description
+                'order' => 'desc'                     // Sorting of returned results: desc - descending (default), asc - ascending
+            ];
+
+        // Request Json
+        $key = 'BpRXHMUFjCdp1609';
+        $secret = 'e58ea39bb36643288a214aeff5c053f1';
+        $json = json_encode($param, JSON_UNESCAPED_UNICODE);
+        $signature = strtoupper(md5($json . $key . $secret));
+
+        $url = 'https://www.kd100.com/api/v1/tracking/realtime';    // Real-time shipment tracking request address
 
         // echo 'request headers key: '.$key;
         // echo 'request headers signature: '.$signature;
         // echo 'request json: '.$json;
 
-       $headers = array (
-                'Content-Type:application/json',
-                'API-Key:'.$key,
-                'signature:'.$signature,
-                'Content-Length:'.strlen($json)
-       );
+        $headers = array(
+            'Content-Type:application/json',
+            'API-Key:' . $key,
+            'signature:' . $signature,
+            'Content-Length:' . strlen($json)
+        );
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_HEADER, 0);
@@ -950,19 +954,19 @@ class ParcelController extends Controller
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         $result = curl_exec($ch);
         $data = json_decode($result, true);
-        
-        $deliveryStatus='';
-        
-      
-        if($data['code']==200 && isset($data['data'])){
-        //    dd($data['data']['order_status_code']);
-        
-         foreach($data['data']['items'] as $item){
-               if($item['order_status_code']==$data['data']['order_status_code']){
-                  $deliveryStatus = $item['order_status_description'];
-               }
-           }
-    
+
+        $deliveryStatus = '';
+
+
+        if ($data['code'] == 200 && isset($data['data'])) {
+            //    dd($data['data']['order_status_code']);
+
+            foreach ($data['data']['items'] as $item) {
+                if ($item['order_status_code'] == $data['data']['order_status_code']) {
+                    $deliveryStatus = $item['order_status_description'];
+                }
+            }
+
         }
         $statuses = ConfigStatus::whereIn('slug', ['pending', 'processing', 'in-transit', 'in-transit-to-be-delivered', 'delivered'])->orderBy('id', 'ASC')->get();
         $onlineTracking = null;
@@ -984,24 +988,24 @@ class ParcelController extends Controller
 
         $aftershipStatus = general_setting('aftership')->status;
 
-        if($aftershipStatus == 'on'){
-            $onlineTracking =  $this->aftershipService->viewLabel($parcel->externalShipper->slug, $parcel->external_tracking);
+        if ($aftershipStatus == 'on') {
+            $onlineTracking = $this->aftershipService->viewLabel($parcel->externalShipper->slug, $parcel->external_tracking);
             // dd($onlineTracking);
             $lastIndex = count($onlineTracking['data']['checkpoints']) - 1;
-            
+
             foreach ($onlineStatuses as $key => $value) {
                 if ($value['status'] == $onlineTracking['data']['tag']) {
                     $statusValue = $value['value'];
                 }
             }
         }
-       
-        return view('user.parcel.tracking', compact('onlineTracking', 'lastIndex', 'onlineStatuses', 'onlineStatusesExceptions', 'statusValue', 'parcel', 'statuses','deliveryStatus'));
+
+        return view('user.parcel.tracking', compact('onlineTracking', 'lastIndex', 'onlineStatuses', 'onlineStatusesExceptions', 'statusValue', 'parcel', 'statuses', 'deliveryStatus'));
     }
 
     public function addRecieverAddress(StoreRequest $request)
     {
-      
+
         $user = User::where('id', Auth::guard("web")->user()->id)->first();
 
         $shipping = new ShippingAddress();
@@ -1035,7 +1039,7 @@ class ParcelController extends Controller
         $shipping->morphable()->associate($user);
 
         $shipping->save();
-       
+
         if (Auth::guard('web')->user()->alert == 0) {
             User::where('id', Auth::guard('web')->user()->id)->update(['alert' => 1]);
         }
@@ -1064,7 +1068,7 @@ class ParcelController extends Controller
     {
 
         foreach ($request->arr as $arr) {
-            $parcel =  Parcel::findOrFail($arr);
+            $parcel = Parcel::findOrFail($arr);
             $parcel->drafted_at = Carbon::now()->format('Y-m-d H:i:s');
             $parcel->save();
         }
@@ -1081,32 +1085,31 @@ class ParcelController extends Controller
         // $title = 'Pending Parcels';
         $ids = DB::table('consolidate_pivot')->pluck('parcel_id')->toArray();
 
-        $data = Parcel::where('user_id', Auth::user()->id);
-       
-        if($request->title=='All Parcels'){
-            $data->where('parcel_status_id','!=',1);
-        }elseif($request->title=='Pending Parcels'){
-            $data->where('parcel_status_id','=',1);
-        }else{
-            $data->where('parcel_status_id','!=',5);
-        }
-       $data= $data->whereNotIn('id', $ids);
+        $data = Parcel::where('user_id', Auth::user()->id)->orderBy('id', 'desc')->get();
+        // if ($request->title == 'All Parcels') {
+        //     $data->where('parcel_status_id', '!=', 1);
+        // } elseif ($request->title == 'Pending Parcels') {
+        //     $data->where('parcel_status_id', '=', 1);
+        // } else {
+        //     $data->where('parcel_status_id', '!=', 5);
+        // }
+        // $data = $data->whereNotIn('id', $ids);
 
-        if (isset($request->status) && $request->status != '' && $request->status != null && $request->status != 'all') {
+        // if (isset($request->status) && $request->status != '' && $request->status != null && $request->status != 'all') {
 
-            $data = $data->where(['parcel_status_id' => $request->status, 'drafted_at' => null]);
-        }
-        if ((isset($request->status) && $request->status != '' && $request->status != null) || $request->status == 'all') {
+        //     $data = $data->where(['parcel_status_id' => $request->status, 'drafted_at' => null]);
+        // }
+        // if ((isset($request->status) && $request->status != '' && $request->status != null) || $request->status == 'all') {
 
-            $data = $data->where('drafted_at', null);
-        }
-        if (isset($request->drafted) && $request->drafted != '' && $request->drafted != null && $request->drafted == 1) {
+        //     $data = $data->where('drafted_at', null);
+        // }
+        // if (isset($request->drafted) && $request->drafted != '' && $request->drafted != null && $request->drafted == 1) {
 
-            $data = $data->whereNotNull('drafted_at');
-        }
+        //     $data = $data->whereNotNull('drafted_at');
+        // }
 
-        $data = $data->orderBy('id', 'desc')->get();
-      
+        // $data = $data->orderBy('id', 'desc')->get();
+
         return Datatables::of($data)
             ->addIndexColumn()
             ->addColumn('action', function ($row) {
@@ -1133,12 +1136,12 @@ class ParcelController extends Controller
                 return $row->created_at;
             })
             ->addColumn('image', function ($row) {
-                if($row->parcelImage->count()>0){
-                    $html = '<img style="width:50px;" src="'.asset('storage/assets/parcel/'.$row->parcelImage[0]->hash_name).'">';
+                if ($row->parcelImage->count() > 0) {
+                    $html = '<img style="width:50px;" src="' . asset('storage/assets/parcel/' . $row->parcelImage[0]->hash_name) . '">';
                     return $html;
-                }else{
+                } else {
 
-                    $html = '<img style="width:50px;" src="'.asset('storage/assets/icons/default.png').'">';
+                    $html = '<img style="width:50px;" src="' . asset('storage/assets/icons/default.png') . '">';
                     return $html;
                 }
             })
@@ -1153,46 +1156,44 @@ class ParcelController extends Controller
                 }
                 return $html;
             })
-            
+
             ->addColumn('order_invoice_status', function ($row) {
                 // 
                 // if ($row->payment_receipt=="" && $row->parcel_status_id != 1 ) 
-                if ($row->payment_receipt!="" && Storage::disk('public')->exists('assets/payment/'.$row->payment_receipt)){
-                    $html = '<a data-invoice-id="' . $row->id . '" class="ni-payment-show-modal" data-parcel-id="' . $row->id . '"><span class="'.$this->checkFileTypeByExtension($row->payment_receipt).'"></span></a>';
+                if ($row->payment_receipt != "" && Storage::disk('public')->exists('assets/payment/' . $row->payment_receipt)) {
+                    $html = '<a data-invoice-id="' . $row->id . '" class="ni-payment-show-modal" data-parcel-id="' . $row->id . '"><span class="' . $this->checkFileTypeByExtension($row->payment_receipt) . '"></span></a>';
                 } else {
 
                     $html = '<a  data-invoice-id="' . $row->id . '"  class="open-modalfor-addrec"> Missing Receipt </a>';
-                   // $html = '<a href="' . route('user.parcel.invoice', ['id' => $row->id]). '"> View Invoice </a>';
-                  
+                    // $html = '<a href="' . route('user.parcel.invoice', ['id' => $row->id]). '"> View Invoice </a>';
+    
                 }
-                
+
                 return $html;
             })
             ->addColumn('invoice_status', function ($row) {
                 // && $row->parcel_status_id == 1
-                
-                if ($row->show_invoice == 0 ) {
-                    
+    
+                if ($row->show_invoice == 0) {
+
                     $html = '<a> Missing Invoice </a>';
-                   // $html = '<a  data-invoice-id="' . $row->id . '"  class="open-modalfor-addrec"> Missing Invoice </a>';
+                    // $html = '<a  data-invoice-id="' . $row->id . '"  class="open-modalfor-addrec"> Missing Invoice </a>';
                 } else {
-                    $html = '<a href="' . route('user.parcel.invoice', ['id' => $row->id]). '"> View Invoice </a>';
-                   // $html = '<a data-invoice-id="' . $row->id . '" class="ni-payment-show-modal" data-parcel-id="' . $row->id . '"><span class="mdi mdi-file-document-box"></span></a>';
+                    $html = '<a href="' . route('user.parcel.invoice', ['id' => $row->id]) . '"> View Invoice </a>';
+                    // $html = '<a data-invoice-id="' . $row->id . '" class="ni-payment-show-modal" data-parcel-id="' . $row->id . '"><span class="mdi mdi-file-document-box"></span></a>';
                 }
                 return $html;
             })
             ->addColumn('payment', function ($row) {
 
-                if ($row->paymentStatus->slug == 'paid' && $row->invoice_payment_receipt!=null) {
+                if ($row->paymentStatus->slug == 'paid' && $row->invoice_payment_receipt != null) {
                     $html = '<a href="javascript:void(0)"><span class="mb-1 badge ni-paymentstatus-show-modal bg-success" data-parcel-id="' . $row->id . '">' . $row->paymentStatus->name . '</span>&nbsp;<img class="ni-payment-show-modal" data-parcel-id="' . $row->id . '" src="' . asset("assets/icons/" . $row->payment->icon) . '" width="30px" /></a>';
-                }elseif($row->paymentStatus->slug == 'unpaid' && $row->invoice_payment_receipt!=null ){
+                } elseif ($row->paymentStatus->slug == 'unpaid' && $row->invoice_payment_receipt != null) {
 
                     $html = '<a href="javascript:void(0)"><span class="mb-1 badge ni-paymentstatus-show-modal bg-danger" data-parcel-id="' . $row->id . '">Pending</span>&nbsp;<img class="ni-payment-show-modal" data-parcel-id="' . $row->id . '" src="' . asset("assets/icons/" . $row->payment->icon) . '" width="30px" /></a>';
-                }
-                elseif ($row->paymentStatus->slug == 'reject') {
+                } elseif ($row->paymentStatus->slug == 'reject') {
                     $html = '<a href="javascript:void(0)"><span class="mb-1 badge ni-payment-show-modal bg-danger" data-parcel-id="' . $row->id . '">Reject</span>&nbsp;<img class="ni-payment-show-modal" data-parcel-id="' . $row->id . '" src="' . asset("assets/icons/" . $row->payment->icon) . '" width="30px" /></a>';
-                }
-                 else {
+                } else {
                     $html = '<a href="javascript:void(0)"><span class="mb-1 badge ni-payment-add-invoice bg-danger" data-parcel-id="' . $row->id . '">Unpaid</span>&nbsp;<img class="ni-payment-show-modal" data-parcel-id="' . $row->id . '" src="' . asset("assets/icons/" . $row->payment->icon) . '" width="30px" /></a>';
                 }
                 return $html;
@@ -1201,14 +1202,14 @@ class ParcelController extends Controller
                 // if ($row->show_invoice == 0) {
                 //     $html = 'N/A';
                 // } else {
-                    $total = $this->getShippingCalculator($row->branch_id, $row->freight_type, $row->import_duty_id, $row->ob_fees, $row->length, $row->width, $row->height, $row->weight, $row->item_value, $row->discount, $row->delivery_fees, $row->tax)['total'];
-                   // $html = (isset($total) ? 'ƒ '.number_format($total, 2).' ANG' : 'ƒ 0.00 ANG');
+                $total = $this->getShippingCalculator($row->branch_id, $row->freight_type, $row->import_duty_id, $row->ob_fees, $row->length, $row->width, $row->height, $row->weight, $row->item_value, $row->discount, $row->delivery_fees, $row->tax)['total'];
+                // $html = (isset($total) ? 'ƒ '.number_format($total, 2).' ANG' : 'ƒ 0.00 ANG');
                 // }
-
-                   $html = (isset($row->amount_total) ? 'ƒ '.number_format($row->amount_total, 2).' ANG' : 'ƒ 0.00 ANG');
-                 if ($row->show_invoice == 0 ) {
-                   return ''; 
-                 }
+    
+                $html = (isset($row->amount_total) ? 'ƒ ' . number_format($row->amount_total, 2) . ' ANG' : 'ƒ 0.00 ANG');
+                if ($row->show_invoice == 0) {
+                    return '';
+                }
                 return $html;
             })
             ->addColumn('description', function ($row) {
@@ -1218,7 +1219,7 @@ class ParcelController extends Controller
                 return (isset($row->sender->address) ? $row->sender->address : 'N/A');
             })
             ->addColumn('sender', function ($row) {
-                return (isset($row->sender) ? ucwords($row->sender->first_name. ' '. $row->sender->last_name) : 'N/A');
+                return (isset($row->sender) ? ucwords($row->sender->first_name . ' ' . $row->sender->last_name) : 'N/A');
             })
             ->addColumn('origin', function ($row) {
                 return (isset($row->sender->country) ? ucwords($row->sender->country->name) : 'N/A');
@@ -1229,7 +1230,7 @@ class ParcelController extends Controller
             ->addColumn('invoice', function ($row) {
                 return (isset($row->invoice_no) ? $row->invoice_no : 'N/A');
             })
-            ->rawColumns(['action','image','checkbox', 'created_at', 'status', 'invoice_status','order_invoice_status', 'payment', 'amount', 'description', 'destination', 'reciever','origin','sender', 'invoice'])
+            ->rawColumns(['action', 'image', 'checkbox', 'created_at', 'status', 'invoice_status', 'order_invoice_status', 'payment', 'amount', 'description', 'destination', 'reciever', 'origin', 'sender', 'invoice'])
             ->make(true);
     }
 
@@ -1240,8 +1241,8 @@ class ParcelController extends Controller
         if ($request->ajax()) {
             $ids = DB::table('consolidate_pivot')->pluck('parcel_id')->toArray();
 
-            $data = Parcel::whereNotIn('id', $ids)->where(['user_id' => Auth::user()->id,'payment_status_id' => 2,'parcel_status_id' => 5])->get();
-            
+            $data = Parcel::whereNotIn('id', $ids)->where(['user_id' => Auth::user()->id, 'payment_status_id' => 2, 'parcel_status_id' => 5])->get();
+
 
 
             return Datatables::of($data)
@@ -1297,16 +1298,17 @@ class ParcelController extends Controller
                 ->rawColumns(['created_at', 'status', 'invoice_status', 'payment', 'amount', 'description', 'destination', 'reciever', 'invoice', 'checkbox'])
                 ->make(true);
         }
-        
-        return view('user.parcel.archived',compact('title'));
-        
+
+        return view('user.parcel.archived', compact('title'));
+
     }
 
-    function checkFileTypeByExtension($filename) {
+    function checkFileTypeByExtension($filename)
+    {
         $extension = pathinfo($filename, PATHINFO_EXTENSION);
         $allowedImageExtensions = ['jpg', 'jpeg', 'png', 'gif']; // Add more image extensions if needed
         $pdfExtension = 'pdf';
-    
+
         if (in_array(strtolower($extension), $allowedImageExtensions)) {
             // File is an image
             return 'mdi mdi-file-image';
@@ -1317,16 +1319,16 @@ class ParcelController extends Controller
             // File type is not supported
             return 'mdi mdi-file-image';
         }
-        
+
     }
 
 
 
     public function changeInvoiceStatus($id)
     {
-        
+
         $payment = Parcel::findOrFail($id);
-         
+
         if ($payment->show_invoice == 0) {
 
             $payment->show_invoice = 1;
@@ -1358,7 +1360,7 @@ class ParcelController extends Controller
         // Generate a file path to save the PDF
         $directory = storage_path('app/public/assets/invoices/');
 
-        $no =  rand(10, 100);
+        $no = rand(10, 100);
 
         if (!File::isDirectory($directory)) {
 
@@ -1376,7 +1378,7 @@ class ParcelController extends Controller
 
     public function invoicePrint($id)
     {
-        
+
         // Retrieve the invoice by ID from the database
         $invoice = Parcel::findOrFail($id);
         // Generate a barcode 
@@ -1425,7 +1427,8 @@ class ParcelController extends Controller
     public function generateQRcode($data = null, $barcodeType = null)
     {
 
-        $QRData = QrCode::generate($data);;
+        $QRData = QrCode::generate($data);
+        ;
 
         return $QRData;
     }
