@@ -50,7 +50,7 @@
                             <h4 class="card-title mb-0">User List</h4>
                         </div>
                         <div class="col-6 text-end">
-                            <!-- <button type="button" class="btn btn-light-info text-info font-weight-medium waves-effect user-data-add">Add Mode</button> -->
+                            <button type="button" class="btn btn-light-info text-info font-weight-medium waves-effect user-data-add">Add User</button> 
                         </div>
                     </div>
                 </div>
@@ -100,6 +100,29 @@
     <!-- /.modal-dialog -->
 </div>
 <!-- /.modal -->
+
+<!-- ADD modal content -->
+<div class="modal fade" id="ni-user-add" tabindex="-1" aria-labelledby="ni-user-add" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header d-flex align-items-center">
+                <h4 class="modal-title" id="myLargeModalLabel">Add User</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="user-add">
+
+            </div>
+            <div class="modal-footer">
+
+            </div>
+        </div>
+        <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+</div>
+<!-- /.modal -->
+
+
 
 <!-- Email modal content -->
 <div class="modal fade" id="ni-user-email" tabindex="-1" aria-labelledby="ni-user-email" aria-hidden="true">
@@ -170,6 +193,24 @@
             ]
         });
     }
+    $(document).on('click', ".user-data-add", function() {
+        let url = "{{route('user.val.addForm')}}";
+        getHtmlAjax(url, "#ni-user-add", "#user-add")
+    })
+$(document).on('click', "#user-add-button", function() {
+let id = $(this).data("user-id");
+let url = "{{route('user.val.addUser')}}";
+let ModalId = "#ni-user-add";
+let formId = "#user-add-form";
+let type = "PUT";
+$("#ni-user-edit").modal('hide');
+$("#user-edit-form").modal('hide');
+updateFormAjax(url, type, formId, ModalId, table);
+
+
+})
+
+
     $(document).on('click', ".user-data-edit", function() {
         let id = $(this).data("user-id");
         let url = "{{route('user.val.edit',['id' => ':id'])}}";

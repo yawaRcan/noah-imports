@@ -386,6 +386,8 @@ Route::group(
                     Route::get('/user/data', 'data')->name('data');
                     Route::get('/user/show/{id}', 'show')->name('show');
                     Route::get('/user/edit/{id}', 'edit')->name('edit');
+                    Route::get('/user/addForm', 'addForm')->name('addForm');
+                    Route::put('/user/addUser', 'addUser')->name('addUser');
                     Route::get('/user/send-email/{id}', 'sendEmail')->name('sendEmail');
                     Route::post('/user/post-send-email/{id}', 'postSendEmail')->name('postSendEmail');
                     Route::put('/user/update/{id}', 'update')->name('update');
