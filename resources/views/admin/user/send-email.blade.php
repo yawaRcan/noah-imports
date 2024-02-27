@@ -1,6 +1,6 @@
 <form class="form-horizontal" id="user-email-form" action="javascript:void(0)"> 
     @csrf 
-    <label for="tb-remail">From Email</label>
+    <label for="tb-remail">Email To</label>
     <div class="input-group mb-3">
         <span class="input-group-text fa fa-envelope"></span>
         <input class="form-control" type="email" name="email" value="{{$user->email}}" />

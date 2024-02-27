@@ -233,6 +233,8 @@ updateFormAjax(url, type, formId, ModalId, table);
         let ModalId = "#ni-user-email";
         let formId = "#user-email-form";
         let type = "POST";
+        $("#ni-user-email").modal('hide');
+        $("#user-email-form").modal('hide');
         createFormAjax(url, type, formId, ModalId)
 
     })

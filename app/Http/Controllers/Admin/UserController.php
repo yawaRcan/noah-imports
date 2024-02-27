@@ -311,6 +311,7 @@ class UserController extends Controller
                 $request->subject,
                 $template,
                 [
+                    'NAME' => $user->first_name . ' ' . $user->last_name,
                     'message' => $request->message,
                 ]
             );
