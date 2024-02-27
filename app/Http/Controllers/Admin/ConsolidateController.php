@@ -418,9 +418,8 @@ class ConsolidateController extends Controller
         if (isset($request->parcel_status) && $statusFlag == 5) {
             $templateD = EmailTemplate::where('slug', 'delivered-consolidate')->first();
             if ($templateD) {
-                dd('no delivered');
                 $shortCodes = [
-                    'NAME' => $user->first_name . ' ' . $user->last_name,
+                    'name' => $user->first_name . ' ' . $user->last_name,
                     'tracking_no' => $Consolidate->external_tracking,
                     'delivery_time' => $Consolidate->es_delivery_date,
                     'consolidate_status' => $Consolidate->parcelStatus->name,
@@ -436,7 +435,7 @@ class ConsolidateController extends Controller
             if ($template) {
 
                 $shortCodes = [
-                    'NAME' => $user->first_name . ' ' . $user->last_name,
+                    'name' => $user->first_name . ' ' . $user->last_name,
                     'tracking_no' => $Consolidate->external_tracking,
                     'consolidate_status' => $Consolidate->parcelStatus->name,
                     'delivery_time' => $Consolidate->es_delivery_date,

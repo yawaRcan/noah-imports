@@ -66,16 +66,24 @@ class RegisteredUserController extends Controller
         if ($template) {
             $verificationUrl = $this->verificationUrl($user);
             $shortCodes = [
-                'VERIFY_URL' => $verificationUrl
+                'VERIFY_URL' => $verificationUrl,
+                'name' => $user->first_name . ' ' . $user->last_name,
+                'email' => $user->email,
+                'password' => $request->password,
+                'image'=>$request->image,
+                'phone'=>$request->phone
             ];
             //Send notification to user 	admin-registeration
             event(new UserEvent($template, $shortCodes, $user, $user, 'RegisterUser'));
         }
         if ($template2) {
             $shortCodes = [
-                'NAME' => $user->first_name . ' ' . $user->last_name,
-                'USERNAME' => $user->username,
-                'PASSWORD' => $request->password
+                'name' => $user->first_name . ' ' . $user->last_name,
+                'email' => $user->email,
+                'username' => $user->username,
+                'password' => $request->password,
+                'image'=>$request->image,
+                'phone'=>$request->phone
             ];
             event(new UserEvent($template2, $shortCodes, $user, $user, 'RegisterUser'));
         }

@@ -93,9 +93,12 @@ class RegisteredUserController extends Controller
 
             $verificationUrl = $this->verificationUrl($user);
             $shortCodes = [
+                'VERIFY_URL' => $verificationUrl,
+                'name' => $user->first_name . ' ' . $user->last_name,
                 'email' => $user->email,
                 'password' => $request->password,
-                'VERIFY_URL' => $verificationUrl
+                'image' => $request->image,
+                'phone' => $request->phone
             ];
             // return $this->verificationUrl($user);
 

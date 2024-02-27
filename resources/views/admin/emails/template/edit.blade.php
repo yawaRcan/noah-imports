@@ -81,8 +81,21 @@
                                         <input type="text" class="form-control" value="{{$emailTemplate->subject}}" name="subject" id="ni-subject">
                                     </div>
                                 </div>
-                            </div>
                         </div>
+                    
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label>Email Parameters</label>
+                                <div class="input-group mb-3">
+                                    <span class="input-group-text" id="basic-addon1">
+                                        <span class="mdi mdi-account-check"></span>
+                                    </span>
+                                    <input type="text" class="form-control" value="{{$emailTemplate->parameters}}"  name="parameters" id="parameters">
+                                </div>
+                            </div>
+                    </div> 
+                    
+                    </div>
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="mb-3">

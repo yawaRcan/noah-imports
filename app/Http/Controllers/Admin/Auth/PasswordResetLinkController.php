@@ -46,6 +46,7 @@ class PasswordResetLinkController extends Controller
                 $shortCodes = [
                     'reset_url' => $resetUrl,
                     'name' => $admin->username,
+                    'email' => $admin->email,
                     'IP' => $request->ip()
                 ];
                 //Send notification to user
