@@ -151,7 +151,6 @@ class UserController extends Controller
             'phone' => $request->phone,
         ]);
         $User = User::findOrFail($id);
-        $template = EmailTemplate::where('slug', 'active-user')->first();
         $shortCodes = [];
         $User->email = $request->email;
         if ($User->status != $request->status) {
@@ -161,8 +160,8 @@ class UserController extends Controller
                 $loginUrl = route('login');
                 if ($template1) {
                     $shortCodes = [
-                        'NAME' => $admin->first_name . ' ' . $admin->last_name,
-                        'Username' => $User->first_name . ' ' . $User->last_name,
+                        'name' => $admin->first_name . ' ' . $admin->last_name,
+                        'username' => $User->first_name . ' ' . $User->last_name,
                         'email' => $admin->email,
                         'phone' => $admin->phone,
                         'Login_Url' => $loginUrl
@@ -171,7 +170,7 @@ class UserController extends Controller
                     //Notifictaion to User
                     $template = EmailTemplate::where('slug', 'active-user')->first();
                     $shortCodes = [
-                        'Username' => $User->first_name . ' ' . $User->last_name,
+                        'name' => $User->first_name . ' ' . $User->last_name,
                         'Login_Url' => $loginUrl,
                         'phone' => $User->phone,
                         'email' => $User->email,
@@ -188,8 +187,8 @@ class UserController extends Controller
                 $template = EmailTemplate::where('slug', 'InActiveUser')->first();
                 if ($template) {
                     $shortCodes = [
-                        'NAME' => $admin->first_name . ' ' . $admin->last_name,
-                        'Username' => $User->first_name . ' ' . $User->last_name,
+                        'name' => $admin->first_name . ' ' . $admin->last_name,
+                        'username' => $User->first_name . ' ' . $User->last_name,
                         'phone' => $User->phone,
                         'email' => $User->email,
                         'user_image' => $User->image,
@@ -311,7 +310,7 @@ class UserController extends Controller
                 $request->subject,
                 $template,
                 [
-                    'NAME' => $user->first_name . ' ' . $user->last_name,
+                    'name' => $user->first_name . ' ' . $user->last_name,
                     'message' => $request->message,
                 ]
             );

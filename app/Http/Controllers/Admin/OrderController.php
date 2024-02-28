@@ -1608,8 +1608,9 @@ class OrderController extends Controller
             $template = EmailTemplate::where('slug', 'new-shipment')->first();
 
             if ($template) {
-
+                $senderName = @$parcels->sender->first_name . ' ' . @$parcels->sender->last_name;
                 $shortCodes = [
+                    'sender_name' => $senderName,
                     'tracking_no' => $parcels->external_tracking,
                     'delivery_time' => $parcels->es_delivery_date,
                     'invoice_url' => route('parcel.invoice', ['id' => $parcels->id]),
