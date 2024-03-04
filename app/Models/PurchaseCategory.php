@@ -9,8 +9,12 @@ class PurchaseCategory extends Model
 {
     use HasFactory;
 
-    public function user() 
+    public function user()
     {
         return $this->belongsTo(User::class, 'added_by');
-    } 
+    }
+    public function admins()
+    {
+        return $this->belongsTo(Admin::class, 'added_by', 'id');
+    }
 }

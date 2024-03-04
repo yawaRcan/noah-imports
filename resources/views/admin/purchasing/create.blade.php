@@ -320,7 +320,7 @@
                                                             </select>
                                                         </div>
                                                         <div class="col-md-9">
-                                                            <input id="price" class="form-control" type="number" name="price" step="0.01" placeholder="Enter product price here" />
+                                                            <input id="price" class="form-control" type="number" name="price" id="price" step="0.01" placeholder="Enter product price here" />
                                                         </div>
                                                     </div>
                                                 </div>

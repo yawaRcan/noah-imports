@@ -112,7 +112,7 @@ Route::get('/getroutes', function () {
 });
 
 Route::get('/', function () {
-    //   $url = 'https://www.amazon.com/Amazon-Essentials-Boatneck-T-Shirt-Oatmeal/dp/B092MM74LH/ref=sr_1_1_ffob_sspa?_encoding=UTF8&content-id=amzn1.sym.b0c3902d-ae70-4b80-8f54-4d0a3246745a&crid=19AKO4YZK6ZPJ&dib=eyJ2IjoiMSJ9.JszgBrVrEYotZZ9ndgLrwM6VkFwiZiMZN5szUfdRyJm3_aq5zncSTewN_uCzafu2gdCVbhR44Ky7FKMyZ4Xw7g.ly-wNOaBqJfMlnZIG-hqCJi3g4DL9ub-ab7e-rDmWbM&dib_tag=se&keywords=Tops&pd_rd_r=4ca8444b-1be4-465b-aee0-079da022c030&pd_rd_w=XMkYc&pd_rd_wg=BV6YQ&pf_rd_p=b0c3902d-ae70-4b80-8f54-4d0a3246745a&pf_rd_r=EQZD95S69K2QSJTZQTQE&qid=1704981468&refinements=p_36%3A-2500&rnid=2661611011&sprefix=tops%2Caps%2C250&sr=8-1-spons&sp_csd=d2lkZ2V0TmFtZT1zcF9hdGY&psc=1';
+    // $url = 'https://www.amazon.com/Bounty-Quick-Size-Paper-Towels-Family/dp/B079VP6DH5/ref=sr_1_3?adgrpid=127260490003&dib=eyJ2IjoiMSJ9.DIqIqYixXjxg68Eg7rKKHGgByS_HHs5tueeQ5qxjSN3UATxXyfJsyF91j13hDRMM8ID32ovqfkAbQ6lbXAFXBlXqO9eYDQD_axo6L6NqiVjMK7gQBt_4UTqY6ZMufPgC7Jr3k7ImIZVpceHWDRqpa39e3a2f1mAIhuTrEDX6G8s3h2GwxALcYuMzylQCPaicXTC9ezc7PKxMkWCBLpjKetwyMaPNaqHGrXFWPwgB2DgmYNpBswc1Uz67KmR-BB1a966PcvlTItNjUQoQ-VfLKTkfMw6ZhXCoBfuuRa_hbfc.8pIh7Ly-j14PiaO3g2xkLg9Or5H4hDpN-t-p265Q-gk&dib_tag=se&hvadid=585479351039&hvdev=c&hvlocphy=1011084&hvnetw=g&hvqmt=b&hvrand=14608782360802479668&hvtargid=kwd-321362582074&hydadcr=27983_14525522&keywords=amazon.com&qid=1709534985&sr=8-3';
 
 
     // // $response = Http::get($url);
@@ -120,17 +120,17 @@ Route::get('/', function () {
     // $proxy = '117.69.233.193:8089'; // Replace with your proxy details
     // $options = [
     //     'proxy' => [
-    //         'http' => '117.69.233.193:8089', // Use this proxy with "http"
-    //         'https' => '117.69.233.193:8089', // Use this proxy with "https",
+    //         'http' => '190.104.146.244:999', // Use this proxy with "http"
+    //         'https' => '190.104.146.244:999', // Use this proxy with "https",
     //     ]
     // ];
 
-    // $httpClient = new Client([ 'verify' => false]);
-    // $httpClient->request('GET',$url , ['proxy' => 'https://149.28.105.215']);
-    // dd($httpClient);
-    // $response = $httpClient->get($url , $options);
+    // $httpClient = new Client(['verify' => false]);
+    // $httpClient->request('GET', $url);
+    // // dd($httpClient);
+    // $response = $httpClient->get($url, $options);
     // $content = $response->getBody()->getContents();
-    // echo $content;
+    // dd($content);
     // dd($client->get($url));
 
     // $response = $client->get($url);
@@ -144,8 +144,8 @@ Route::get('/', function () {
 
     //     $imageElements = $crawler->filter('span span span img');
 
-    //     $imageUrls=[];
-    //     $imageUrls['title']=$productTitle;
+    //     $imageUrls = [];
+    //     $imageUrls['title'] = $productTitle;
     //     $imageElements->each(function (Crawler $element) use (&$imageUrls) {
 
     //         // $element = $element->filter('img');
@@ -687,6 +687,7 @@ Route::group(
                     Route::get('/parcel/addpaymentinvoice/{id}', 'addPaymentInvoice')->name('addPaymentInvoice');
                     Route::post('/parcel/paymentStatus/', 'updatePaymentStatus')->name('updatePaymentStatus');
                     Route::get('/parcel/getTracking/{id}', 'getParcelTracking')->name('getTracking');
+                    Route::get('/parcel/getShipmentStatus/Link/{id}', 'shipmentTracking')->name('shipmentTracking');
                     Route::put('/parcel/changeinvoicestatus/{id}', 'changeInvoiceStatus')->name('changeInvoiceStatus');
                     Route::put('/parcel/delivery-date/update', 'updateDeliveryDate')->name('deliveryDate.update');
                     Route::get('/parcel/imagesget/{id}', 'imagesGet')->name('imagesGet');

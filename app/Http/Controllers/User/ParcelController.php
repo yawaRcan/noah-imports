@@ -210,6 +210,7 @@ class ParcelController extends Controller
      */
     public function store(CreateRequest $request)
     {
+
         $total = $this->getShippingCalculator(
             $request->branch_id,
             $request->freight_type,
@@ -569,11 +570,11 @@ class ParcelController extends Controller
 
         if ($this->discount_type == 'ship') {
             $discount = ($total * $discount) / 100; //discount is always calculated in percentage
-            return ($total - $discount) + $shipping + $tax;
+            return($total - $discount) + $shipping + $tax;
         } else {
             $total = $total + $shipping + $tax;
             $discount = ($total * $discount) / 100; //discount is always calculated in percentage
-            return ($total - $discount);
+            return($total - $discount);
         }
     }
     /**
@@ -908,9 +909,6 @@ class ParcelController extends Controller
     public function getParcelTracking($id)
     {
         $parcel = Parcel::findOrFail($id);
-
-
-
         $param =
             [
 
@@ -999,8 +997,100 @@ class ParcelController extends Controller
                 }
             }
         }
-
         return view('user.parcel.tracking', compact('onlineTracking', 'lastIndex', 'onlineStatuses', 'onlineStatusesExceptions', 'statusValue', 'parcel', 'statuses', 'deliveryStatus'));
+    }
+    public function shipmentTracking($id)
+    {
+        $parcel = Parcel::findOrFail($id);
+        $param =
+            [
+
+                'carrier_id' => $parcel->externalShipper->slug,               // the carrier code, you can find from https://app.kd100.com/api-management
+                'tracking_number' => $parcel->external_tracking,
+                //'9926933413',    
+                // The tracking number you want to query
+                'phone' => '',                        // Phone number
+                'ship_from' => '',                    // City of departure
+                'ship_to' => '',                      // Destination city
+                'area_show' => 1,                     // 0: close (default); 1: return data about area_name, location, order_status_description
+                'order' => 'desc'                     // Sorting of returned results: desc - descending (default), asc - ascending
+            ];
+
+        // Request Json
+        $key = 'BpRXHMUFjCdp1609';
+        $secret = 'e58ea39bb36643288a214aeff5c053f1';
+        $json = json_encode($param, JSON_UNESCAPED_UNICODE);
+        $signature = strtoupper(md5($json . $key . $secret));
+
+        $url = 'https://www.kd100.com/api/v1/tracking/realtime';    // Real-time shipment tracking request address
+
+        // echo 'request headers key: '.$key;
+        // echo 'request headers signature: '.$signature;
+        // echo 'request json: '.$json;
+
+        $headers = array(
+            'Content-Type:application/json',
+            'API-Key:' . $key,
+            'signature:' . $signature,
+            'Content-Length:' . strlen($json)
+        );
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_HEADER, 0);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $json);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        $result = curl_exec($ch);
+        $data = json_decode($result, true);
+
+        $deliveryStatus = '';
+
+
+        if ($data['code'] == 200 && isset($data['data'])) {
+            //    dd($data['data']['order_status_code']);
+
+            foreach ($data['data']['items'] as $item) {
+                if ($item['order_status_code'] == $data['data']['order_status_code']) {
+                    $deliveryStatus = $item['order_status_description'];
+                }
+            }
+
+        }
+        $statuses = ConfigStatus::whereIn('slug', ['pending', 'processing', 'in-transit', 'in-transit-to-be-delivered', 'delivered'])->orderBy('id', 'ASC')->get();
+        $onlineTracking = null;
+        $lastIndex = '';
+        $statusValue = '';
+        $onlineStatusesExceptions = [
+            ['status' => 'AttemptFail', 'message' => 'Carrier attempted to deliver but failed, and usually leaves a notice and will try to deliver again.'],
+            ['status' => 'Exception', 'message' => 'Custom hold, undelivered, returned shipment to sender or any shipping exceptions.'],
+            ['status' => 'Expired', 'message' => 'Shipment has no tracking information for 30 days since added.'],
+        ];
+        $onlineStatuses = [
+            ['value' => 1, 'status' => 'Pending', 'message' => 'New shipments added that are pending to track, or new shipments without tracking information available yet.'],
+            ['value' => 2, 'status' => 'InfoReceived', 'message' => 'Carrier has received request from shipper and is about to pick up the shipment.'],
+            ['value' => 3, 'status' => 'InTransit', 'message' => 'Carrier has accepted or picked up shipment from shipper. The shipment is on the way.'],
+            ['value' => 4, 'status' => 'OutForDelivery', 'message' => 'Carrier is about to deliver the shipment , or it is ready to pickup.'],
+            ['value' => 5, 'status' => 'Delivered', 'message' => 'The shipment was delivered successfully.'],
+            // ['status' =>'AvailableForPickup', 'message' => 'The package arrived at a pickup point near you and is available for pickup.'],
+        ];
+
+        $aftershipStatus = general_setting('aftership')->status;
+
+        if ($aftershipStatus == 'on') {
+            $onlineTracking = $this->aftershipService->viewLabel($parcel->externalShipper->slug, $parcel->external_tracking);
+            // dd($onlineTracking);
+            $lastIndex = count($onlineTracking['data']['checkpoints']) - 1;
+
+            foreach ($onlineStatuses as $key => $value) {
+                if ($value['status'] == $onlineTracking['data']['tag']) {
+                    $statusValue = $value['value'];
+                }
+            }
+        }
+        return view('user.parcel.trackingUser', compact('onlineTracking', 'lastIndex', 'onlineStatuses', 'onlineStatusesExceptions', 'statusValue', 'parcel', 'statuses', 'deliveryStatus'));
     }
 
     public function addRecieverAddress(StoreRequest $request)
@@ -1151,7 +1241,7 @@ class ParcelController extends Controller
             })
             ->addColumn('status', function ($row) {
                 $html = $row->parcelStatus->name;
-                if (isset($row->parcelStatus->color)) {
+                if (isset ($row->parcelStatus->color)) {
                     $html = '<span class="mb-1 badge" style="background-color:' . $row->parcelStatus->color . '">' . $row->parcelStatus->name . '</span>';
                 }
                 return $html;
@@ -1206,29 +1296,29 @@ class ParcelController extends Controller
                 // $html = (isset($total) ? 'ƒ '.number_format($total, 2).' ANG' : 'ƒ 0.00 ANG');
                 // }
     
-                $html = (isset($row->amount_total) ? 'ƒ ' . number_format($row->amount_total, 2) . ' ANG' : 'ƒ 0.00 ANG');
+                $html = (isset ($row->amount_total) ? 'ƒ ' . number_format($row->amount_total, 2) . ' ANG' : 'ƒ 0.00 ANG');
                 if ($row->show_invoice == 0) {
                     return '';
                 }
                 return $html;
             })
             ->addColumn('description', function ($row) {
-                return (isset($row->product_description) ? $row->product_description : 'N/A');
+                return (isset ($row->product_description) ? $row->product_description : 'N/A');
             })
             ->addColumn('destination', function ($row) {
-                return (isset($row->sender->address) ? $row->sender->address : 'N/A');
+                return (isset ($row->sender->address) ? $row->sender->address : 'N/A');
             })
             ->addColumn('sender', function ($row) {
-                return (isset($row->sender) ? ucwords($row->sender->first_name . ' ' . $row->sender->last_name) : 'N/A');
+                return (isset ($row->sender) ? ucwords($row->sender->first_name . ' ' . $row->sender->last_name) : 'N/A');
             })
             ->addColumn('origin', function ($row) {
-                return (isset($row->sender->country) ? ucwords($row->sender->country->name) : 'N/A');
+                return (isset ($row->sender->country) ? ucwords($row->sender->country->name) : 'N/A');
             })
             ->addColumn('reciever', function ($row) {
-                return (isset($row->full_name) ? $row->full_name : 'N/A');
+                return (isset ($row->full_name) ? $row->full_name : 'N/A');
             })
             ->addColumn('invoice', function ($row) {
-                return (isset($row->invoice_no) ? $row->invoice_no : 'N/A');
+                return (isset ($row->invoice_no) ? $row->invoice_no : 'N/A');
             })
             ->rawColumns(['action', 'image', 'checkbox', 'created_at', 'status', 'invoice_status', 'order_invoice_status', 'payment', 'amount', 'description', 'destination', 'reciever', 'origin', 'sender', 'invoice'])
             ->make(true);
@@ -1256,7 +1346,7 @@ class ParcelController extends Controller
                 })
                 ->addColumn('status', function ($row) {
                     $html = $row->parcelStatus->name;
-                    if (isset($row->parcelStatus->color)) {
+                    if (isset ($row->parcelStatus->color)) {
                         $html = '<span class="mb-1 badge" style="background-color:' . $row->parcelStatus->color . '">' . $row->parcelStatus->name . '</span>';
                     }
                     if ($row->parcelStatus->slug == 'in-transit-to-be-delivered') {
@@ -1281,19 +1371,19 @@ class ParcelController extends Controller
                 ->addColumn('amount', function ($row) {
                     $total = $this->getShippingCalculator($row->branch_id, $row->freight_type, $row->import_duty_id, $row->ob_fees, $row->length, $row->width, $row->height, $row->weight, $row->item_value, $row->discount, $row->delivery_fees, $row->tax)['total'];
 
-                    return (isset($total) ? number_format($total, 2) : '0.00');
+                    return (isset ($total) ? number_format($total, 2) : '0.00');
                 })
                 ->addColumn('description', function ($row) {
-                    return (isset($row->product_description) ? $row->product_description : 'N/A');
+                    return (isset ($row->product_description) ? $row->product_description : 'N/A');
                 })
                 ->addColumn('destination', function ($row) {
-                    return (isset($row->reciever->address) ? $row->reciever->address : 'N/A');
+                    return (isset ($row->reciever->address) ? $row->reciever->address : 'N/A');
                 })
                 ->addColumn('reciever', function ($row) {
-                    return (isset($row->full_name) ? $row->full_name : 'N/A');
+                    return (isset ($row->full_name) ? $row->full_name : 'N/A');
                 })
                 ->addColumn('invoice', function ($row) {
-                    return (isset($row->invoice_no) ? $row->invoice_no : 'N/A');
+                    return (isset ($row->invoice_no) ? $row->invoice_no : 'N/A');
                 })
                 ->rawColumns(['created_at', 'status', 'invoice_status', 'payment', 'amount', 'description', 'destination', 'reciever', 'invoice', 'checkbox'])
                 ->make(true);

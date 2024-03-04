@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Controllers\Admin; 
+namespace App\Http\Controllers\Admin;
 
 use Illuminate\Support\Str;
 
 use Illuminate\Http\Request;
 
-use App\Models\PurchaseCategory; 
+use App\Models\PurchaseCategory;
 
 use Illuminate\Support\Facades\Auth;
 
@@ -16,9 +16,9 @@ use Illuminate\Support\Facades\Storage;
 
 use Yajra\DataTables\Facades\DataTables;
 
-use App\Http\Requests\Admin\Category\UpdateRequest; 
+use App\Http\Requests\Admin\Category\UpdateRequest;
 
-use App\Http\Requests\Admin\Category\CreateRequest; 
+use App\Http\Requests\Admin\Category\CreateRequest;
 
 
 class PurchaseCategoryController extends Controller
@@ -44,12 +44,13 @@ class PurchaseCategoryController extends Controller
      */
     public function store(CreateRequest $request)
     {
+
         $Category = new PurchaseCategory();
         $Category->title = (isset($request->title)) ? $request->title : '';
         $Category->slug = (isset($request->title)) ? Str::slug($request->title) : '';
-        $Category->summary = (isset($request->category_sum)) ? $request->category_sum  : '';  
-        $Category->added_by = (isset(Auth::guard('admin')->user()->id)) ? Auth::guard('admin')->user()->id  : 1;
-        $Category->photo = (isset($request->category_file)) ? $this->fileUpload($request->category_file)  : 'upload.png';
+        $Category->summary = (isset($request->category_sum)) ? $request->category_sum : '';
+        $Category->added_by = (isset(Auth::guard('admin')->user()->id)) ? Auth::guard('admin')->user()->id : 1;
+        $Category->photo = (isset($request->category_file)) ? $this->fileUpload($request->category_file) : 'upload.png';
         $Category->status = 'active';
         $Category->save();
         $notify = ['success' => "Category has been added."];
@@ -83,10 +84,10 @@ class PurchaseCategoryController extends Controller
         if ($Category->title != $request->title) {
             $Category->slug = (isset($request->title)) ? Str::slug($request->title) : '';
         }
-        $Category->summary = (isset($request->category_sum)) ? $request->category_sum  : '';
-        if($request->category_file){
-            $Category->photo = (isset($request->category_file)) ? $this->fileUpload($request->category_file, $Category->photo)  : 'upload.png';
-        } 
+        $Category->summary = (isset($request->category_sum)) ? $request->category_sum : '';
+        if ($request->category_file) {
+            $Category->photo = (isset($request->category_file)) ? $this->fileUpload($request->category_file, $Category->photo) : 'upload.png';
+        }
         $Category->save();
         $notify = ['success' => "Category has been updated."];
         return $notify;
@@ -105,8 +106,8 @@ class PurchaseCategoryController extends Controller
 
     public function data(Request $var = null)
     {
-        $data = PurchaseCategory::get();
-
+        $data = PurchaseCategory::with('admins')->get();
+        // dd($data);
         return Datatables::of($data)
             ->addIndexColumn()
             ->addColumn('action', function ($row) {
@@ -132,11 +133,11 @@ class PurchaseCategoryController extends Controller
                 return $row->status;
             })
             ->addColumn('created_by', function ($row) {
-                return $row->user->first_name;
+                return $row->admins->first_name;
             })
             ->addColumn('image', function ($row) {
 
-                $html = '<img class="nl-exship-category-add-preview" src="'.asset('storage/assets/category').'/'.$row->photo.'" width="30" />';
+                $html = '<img class="nl-exship-category-add-preview" src="' . asset('storage/assets/category') . '/' . $row->photo . '" width="30" />';
 
                 return $html;
             })

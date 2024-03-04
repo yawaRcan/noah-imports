@@ -62,7 +62,7 @@ class OrderController extends Controller
     public function scrapeProductImages($url)
     {
 
-        $client = new Client();
+        $client = new Client(['verify' => false]);
 
         $response = $client->get($url, [
             'headers' => [
@@ -74,12 +74,13 @@ class OrderController extends Controller
         $check = $response->getStatusCode();
 
         if ($check == 200) {
+
             // Get the HTML content from the response
             $htmlContent = $response->getBody()->getContents();
             // dd($htmlContent);
-            // Create a new DOM Crawler instance
+            // Create  new DOM Crawler instance
             $crawler = new Crawler($htmlContent);
-
+            // dd($crawler);
             $imageUrls = array();
 
             $parts = parse_url($url);
@@ -87,6 +88,7 @@ class OrderController extends Controller
             if (isset($parts['scheme']) && isset($parts['host'])) {
 
                 $mainLink = $parts['scheme'] . "://" . $parts['host'];
+
             } else {
 
                 return [];
@@ -129,6 +131,7 @@ class OrderController extends Controller
             } elseif ($mostMatchedString === 'amazonStr') {
 
                 $imageUrls = $this->extractAmazon($url);
+
             } elseif ($mostMatchedString === 'walmartStr') {
 
                 $imageUrls = $this->extractWalMart($url);
@@ -176,6 +179,8 @@ class OrderController extends Controller
 
             return $imageUrls;
         }
+
+
     }
 
     function extractOG($url)
@@ -469,7 +474,6 @@ class OrderController extends Controller
         $client = new \Goutte\Client();
 
         $parsedUrl = parse_url($url);
-
         $host = $parsedUrl['host'];
 
         $domainParts = explode('.', $host);
@@ -477,26 +481,25 @@ class OrderController extends Controller
         $domain = $domainParts[count($domainParts) - 2];
 
         $imageUrls['website'] = $domain;
-
         $crawler = $client->request('GET', $url);
 
-        $title = $crawler->filter('.product-title h1')->first();
-
+        $title = $crawler->filter('.product-title-container h1')->first();
         $imageUrls['title'] = $title->text();
 
-        $price = $crawler->filter('.price-item .price .promotion')->first();
+        $price = $crawler->filter('.product-price .price-list .price-item span')->first();
         $pattern = '/\d+(\.\d+)?/';  // Regular expression pattern to match the price 
         preg_match($pattern, $price->text(), $matches);
-        if (!empty($matches)) {
-            $price = $matches[0];
-            $imageUrls['price'] = $price;  // Output: 349.00
-        } else {
-            $imageUrls['price'] = 0;
-        }
+        $imageUrls['price'] = $price->text();
+        // if (!empty($matches)) {
+        //     $price = $matches[0];
+        //     $imageUrls['price'] = $price;  // Output: 349.00
+        // } else {
+        //     $imageUrls['price'] = 0;
+        // }
 
 
         // Use CSS selectors to find the product image elements
-        $imageElements = $crawler->filter('.detail-next-slick-slide img');
+        $imageElements = $crawler->filter('.detail-product-image .image-list .image-list-slider .main-item img ');
 
         // Extract the image URLs
         $imageElements->each(function (Crawler $element) use (&$imageUrls) {
@@ -506,7 +509,6 @@ class OrderController extends Controller
 
             $imageUrls['images'][] = $imageUrl;
         });
-
         return $imageUrls;
     }
 
@@ -563,7 +565,6 @@ class OrderController extends Controller
         $crawler = $client->request('GET', $url);
 
         $title = $crawler->filter('#productTitle')->first();
-
         $imageUrls['title'] = $title->text();
 
         $imageElements = $crawler->filter('span span span img');
@@ -1488,7 +1489,7 @@ class OrderController extends Controller
             })
             ->addColumn('delivery_status', function ($row) {
                 $html = $row->deliveryStatus->name ?? 'N/A';
-                if (isset($row->deliveryStatus->color)) {
+                if (isset ($row->deliveryStatus->color)) {
                     $html = '<span class="mb-1 badge" style="background-color:' . $row->deliveryStatus->color . '">' . $row->deliveryStatus->name . '</span>';
                 }
                 return $html;
@@ -1519,18 +1520,18 @@ class OrderController extends Controller
             })
             ->addColumn('total', function ($row) {
 
-                return (isset($row->total) ? 'ƒ ' . number_format($row->amount_converted, 2) . ' ANG' : 'ƒ 0.00 ANG');
+                return (isset ($row->total) ? 'ƒ ' . number_format($row->amount_converted, 2) . ' ANG' : 'ƒ 0.00 ANG');
             })
             ->addColumn('reciever', function ($row) {
                 $address = 'N/A';
-                if (isset($row->shipperAddress)) {
+                if (isset ($row->shipperAddress)) {
                     $address = $row->shipperAddress->first_name . ' ' . $row->shipperAddress->last_name . ' - ' . $row->shipperAddress->country->name;
                 }
 
                 return $address;
             })
             ->addColumn('created_at', function ($row) {
-                return (isset($row->created_at) ? $row->created_at->format('F j, Y h:i A') : 'N/A');
+                return (isset ($row->created_at) ? $row->created_at->format('F j, Y h:i A') : 'N/A');
             })
             ->rawColumns(['action', 'status', 'delivery_status', 'payment_status', 'total', 'reciever'])
             ->make(true);
@@ -1793,12 +1794,17 @@ class OrderController extends Controller
         $url = $request->site_url;
 
         $product = $this->scrapeProductImages($url);
+        $client = new Client(['verify' => false]);
+
+
+
+
+
         $title = $product['title'];
         $website = $product['website'];
-        $price = @$product['price'];
+        $price = preg_replace('/[^0-9.]/', "", $product['price']);
         $itemNumber = @$product['item_number'];
         $imageUrls = $product['images'];
-
         if (count($imageUrls) > 0) {
 
             $html = view('admin.purchasing.product_images', compact('imageUrls', 'title', 'website', 'price', 'itemNumber'))->render();

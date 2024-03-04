@@ -218,7 +218,8 @@ class ParcelController extends Controller
      */
     public function store(CreateRequest $request)
     {
-
+        ini_set('max_execution_time', 500);
+        ini_set('memory_limit', '700M');
         $total = $this->getShippingCalculator(
             $request->branch_id,
             $request->freight_type,
@@ -401,12 +402,13 @@ class ParcelController extends Controller
         if ($template) {
 
             $senderName = @$parcels->sender->first_name . ' ' . @$parcels->sender->last_name;
-
             $shortCodes = [
+                'name' => $user->first_name . ' ' . $user->last_name,
                 'sender_name' => $senderName,
                 'tracking_no' => $parcels->external_tracking,
                 'delivery_time' => $parcels->es_delivery_date,
-                'invoice_url' => route('parcel.invoice', ['id' => $parcels->id]),
+                // 'invoice_url' => route('parcel.getTrackingUser', ['id' => $parcels->id]),
+                'invoice_url' => url('/user/parcel/getShipmentStatus/Link/' . $parcels->id),
             ];
 
             //Send notification to user
@@ -559,11 +561,11 @@ class ParcelController extends Controller
     {
         if ($this->discount_type == 'ship') {
             $discount = ($total * $discount) / 100; //discount is always calculated in percentage
-            return ($total - $discount) + $shipping + $tax;
+            return($total - $discount) + $shipping + $tax;
         } else {
             $total = $total + $shipping + $tax;
             $discount = ($total * $discount) / 100; //discount is always calculated in percentage
-            return ($total - $discount);
+            return($total - $discount);
         }
     }
 
@@ -1077,42 +1079,20 @@ class ParcelController extends Controller
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         $result = curl_exec($ch);
         $data = json_decode($result, true);
-
-
-
         $deliveryStatus = '';
         $externalTrackingStatusArr = [];
-
-
         if ($data['code'] == 200 && isset($data['data'])) {
             //    dd($data['data']['order_status_code']);
-
             $arr_column = [];
             foreach ($data['data']['items'] as $item) {
-
                 $arr_column[] = $item['order_status_description'];
                 if ($item['order_status_code'] == $data['data']['order_status_code']) {
-
                     $deliveryStatus = $item['order_status_description'];
-
-
                 }
             }
             $externalTrackingStatusArr = array_unique($arr_column);
-
-
         }
-
-
-
-
-
-
-
-
-
         $statuses = ConfigStatus::whereIn('slug', ['pending', 'processing', 'in-transit', 'in-transit-to-be-delivered', 'delivered'])->orderBy('id', 'ASC')->get();
-
         $onlineTracking = null;
         $lastIndex = '';
         $statusValue = '';
@@ -1145,8 +1125,6 @@ class ParcelController extends Controller
                 }
             }
         }
-
-
         return view('admin.parcel.tracking', compact('onlineTracking', 'lastIndex', 'onlineStatuses', 'onlineStatusesExceptions', 'statusValue', 'parcel', 'statuses', 'externalTrackingStatusArr', 'deliveryStatus'));
     }
 
@@ -1370,7 +1348,7 @@ class ParcelController extends Controller
             })
             ->addColumn('status', function ($row) {
                 $html = $row->parcelStatus->name;
-                if (isset($row->parcelStatus->color)) {
+                if (isset ($row->parcelStatus->color)) {
                     $html = '<span class="mb-1 badge" style="background-color:' . $row->parcelStatus->color . '">' . $row->parcelStatus->name . '</span>';
                 }
                 if ($row->parcelStatus->slug == 'in-transit-to-be-delivered') {
@@ -1417,26 +1395,26 @@ class ParcelController extends Controller
                 $total = $this->getShippingCalculator($row->branch_id, $row->freight_type, $row->import_duty_id, $row->ob_fees, $row->length, $row->width, $row->height, $row->weight, $row->item_value, $row->discount, $row->delivery_fees, $row->tax)['total'];
 
                 //return (isset($total) ? 'ƒ '.number_format($total, 2).' ANG' : 'ƒ 0.00 ANG');
-                return (isset($row->amount_total) ? 'ƒ ' . number_format($row->amount_total, 2) . ' ANG' : 'ƒ 0.00 ANG');
+                return (isset ($row->amount_total) ? 'ƒ ' . number_format($row->amount_total, 2) . ' ANG' : 'ƒ 0.00 ANG');
 
             })
             ->addColumn('description', function ($row) {
-                return (isset($row->product_description) ? $row->product_description : 'N/A');
+                return (isset ($row->product_description) ? $row->product_description : 'N/A');
             })
             ->addColumn('destination', function ($row) {
-                return (isset($row->reciever->address) ? $row->reciever->address : 'N/A');
+                return (isset ($row->reciever->address) ? $row->reciever->address : 'N/A');
             })
             ->addColumn('sender', function ($row) {
-                return (isset($row->sender) ? ucwords($row->sender->first_name . ' ' . $row->sender->last_name) : 'N/A');
+                return (isset ($row->sender) ? ucwords($row->sender->first_name . ' ' . $row->sender->last_name) : 'N/A');
             })
             ->addColumn('origin', function ($row) {
-                return (isset($row->sender->country) ? ucwords($row->sender->country->name) : 'N/A');
+                return (isset ($row->sender->country) ? ucwords($row->sender->country->name) : 'N/A');
             })
             ->addColumn('reciever', function ($row) {
-                return (isset($row->full_name) ? $row->full_name : 'N/A');
+                return (isset ($row->full_name) ? $row->full_name : 'N/A');
             })
             ->addColumn('invoice', function ($row) {
-                return (isset($row->invoice_no) ? '<a  href="' . route('parcel.show', ['id' => $row->id]) . '">' . $row->invoice_no . '</a>' : 'N/A');
+                return (isset ($row->invoice_no) ? '<a  href="' . route('parcel.show', ['id' => $row->id]) . '">' . $row->invoice_no . '</a>' : 'N/A');
             })
             ->rawColumns(['action', 'image', 'created_at', 'status', 'invoice_status', 'order_invoice_status', 'payment', 'amount', 'description', 'destination', 'reciever', 'sender', 'origin', 'invoice', 'checkbox'])
             ->make(true);
@@ -1586,7 +1564,7 @@ class ParcelController extends Controller
                 })
                 ->addColumn('status', function ($row) {
                     $html = $row->parcelStatus->name;
-                    if (isset($row->parcelStatus->color)) {
+                    if (isset ($row->parcelStatus->color)) {
                         $html = '<span class="mb-1 badge" style="background-color:' . $row->parcelStatus->color . '">' . $row->parcelStatus->name . '</span>';
                     }
                     if ($row->parcelStatus->slug == 'in-transit-to-be-delivered') {
@@ -1611,20 +1589,20 @@ class ParcelController extends Controller
                 ->addColumn('amount', function ($row) {
                     $total = $this->getShippingCalculator($row->branch_id, $row->freight_type, $row->import_duty_id, $row->ob_fees, $row->length, $row->width, $row->height, $row->weight, $row->item_value, $row->discount, $row->delivery_fees, $row->tax)['total'];
 
-                    return (isset($total) ? number_format($total, 2) : '0.00');
+                    return (isset ($total) ? number_format($total, 2) : '0.00');
                 })
                 ->addColumn('description', function ($row) {
-                    return (isset($row->product_description) ? $row->product_description : 'N/A');
+                    return (isset ($row->product_description) ? $row->product_description : 'N/A');
                 })
                 ->addColumn('destination', function ($row) {
-                    return (isset($row->reciever->address) ? $row->reciever->address : 'N/A');
+                    return (isset ($row->reciever->address) ? $row->reciever->address : 'N/A');
                 })
                 ->addColumn('reciever', function ($row) {
-                    return (isset($row->full_name) ? $row->full_name : 'N/A');
+                    return (isset ($row->full_name) ? $row->full_name : 'N/A');
                 })
                 ->addColumn('invoice', function ($row) {
 
-                    return (isset($row->invoice_no) ? '<a  href="' . route('parcel.show', ['id' => $row->id]) . '" target="_blank">' . $row->invoice_no . '</a>' : 'N/A');
+                    return (isset ($row->invoice_no) ? '<a  href="' . route('parcel.show', ['id' => $row->id]) . '" target="_blank">' . $row->invoice_no . '</a>' : 'N/A');
                     // return (isset($row->invoice_no) ? $row->invoice_no : 'N/A');
                 })
                 ->rawColumns(['created_at', 'status', 'invoice_status', 'payment', 'amount', 'description', 'destination', 'reciever', 'invoice', 'checkbox'])
