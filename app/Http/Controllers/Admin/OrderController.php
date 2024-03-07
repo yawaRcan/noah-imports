@@ -43,6 +43,7 @@ class OrderController extends Controller
 {
 
     use CartCalculation;
+    public $imagesUrlInterior = array();
     /**
      * Display a listing of the resource.
      */
@@ -72,7 +73,6 @@ class OrderController extends Controller
         ]);
 
         $check = $response->getStatusCode();
-
         if ($check == 200) {
 
             // Get the HTML content from the response
@@ -93,7 +93,6 @@ class OrderController extends Controller
 
                 return [];
             }
-
             $matchScores = array();
 
             similar_text($mainLink, 'https://www.ebay.com', $ebayScore);
@@ -106,9 +105,13 @@ class OrderController extends Controller
 
             similar_text($mainLink, 'https://sale.alibaba.com/', $alibabasaleScore);
 
+            similar_text($mainLink, "https://www.temu.com", $temuScore);
+
+            similar_text($mainLink, "https://www.shein.com", $sheinScore);
+
+
+
             similar_text($mainLink, $mainLink, $normalScore);
-
-
             $matchScores['ebayStr'] = $ebayScore;
 
             $matchScores['amazonStr'] = $amazonScore;
@@ -118,6 +121,10 @@ class OrderController extends Controller
             $matchScores['alibabaStr'] = $alibabaScore;
 
             $matchScores['alibabasaleStr'] = $alibabasaleScore;
+
+            $matchScores['temuStr'] = $temuScore;
+
+            $matchScores['sheinStr'] = $sheinScore;
 
             $matchScores['normalStr'] = $normalScore;
 
@@ -141,8 +148,11 @@ class OrderController extends Controller
             } elseif ($mostMatchedString === 'alibabasaleStr') {
 
                 $imageUrls = $this->extractAliBabaSale($url);
+            } elseif ($mostMatchedString === 'temuStr') {
+                $imageUrls = $this->extractTemu($url);
+            } elseif ($mostMatchedString === 'sheinStr') {
+                $imageUrls = $this->extractShein($url);
             } elseif ($mostMatchedString === 'normalStr') {
-
                 if (!$imageUrls) {
 
                     $imageUrls = $this->extractfigure($url);
@@ -508,6 +518,91 @@ class OrderController extends Controller
             $imageUrl = $element->attr('src');
 
             $imageUrls['images'][] = $imageUrl;
+        });
+        return $imageUrls;
+    }
+
+    function extractShein($url)
+    {
+
+        $client = new \Goutte\Client();
+
+        $parsedUrl = parse_url($url);
+
+        $host = $parsedUrl['host'];
+
+        $domainParts = explode('.', $host);
+
+        $domain = $domainParts[count($domainParts) - 2];
+        $imageUrls['website'] = $domain;
+        $crawler = $client->request('GET', $url);
+        $scriptTag = $crawler->filter('script#goodsDetailSchema')->first();
+        // dd($scriptTag);
+        $scriptContent = $scriptTag->text();
+        $jsonContent = json_decode($scriptContent, true);
+
+
+        // dd($jsonContent['offers']['price']);
+
+
+        // $jsonContent = [ // app\Http\Controllers\Admin\OrderController.php:541
+        //     "@context" => "https://schema.org/",
+        //     "@type" => "Product",
+        //     "description" => "To find out about the 48-12 Pieces Imitation Pearl Multi-Layered Wide Twist Earrings Set Party Date Gift Suitable For Daily Wear at SHEIN, part of our latest Earring Sets ready to shop online today!",
+        //     "name" => "48-12 Pieces Imitation Pearl Multi-Layered Wide Twist Earrings Set Party Date Gift Suitable For Daily Wear",
+        //     "offers" => [
+        //         "@type" => "Offer",
+        //         "priceCurrency" => "USD",
+        //         "price" => "1.00",
+        //         "availability" => "https://schema.org/InStock",
+        //         "url" => "https://www.shein.com/48-12-Pieces-Imitation-Pearl-Multi-Layered-Wide-Twist-Earrings-Set-Party-Date-Gift-Suitable-For-Daily-Wear-p-27595779.html?src_identifier=on%3DIMAGE_COMPONENT%60cn%3Dshopbycate%60hz%3DhotZone_13%60ps%3D4_13%60jc%3Dreal_3634&src_module=All&src_tab_page_id=page_home1709723106076&mallCode=1&pageListType=4%22"
+        //     ],
+        //     "image" => "//img.ltwebstatic.com/images3_spmp/2023/11/08/cc/1699433562b6c41f68e12f9ad65e95d60c80603157_thumbnail_405x552.jpg",
+        //     "sku" => "sj2311078653888114",
+        //     "aggregateRating" => [
+        //         "@type" => "AggregateRating",
+        //         "ratingValue" => 4.98,
+        //         "reviewCount" => 1000
+        //     ]
+        // ];
+        $imageUrls['price'] = $jsonContent['offers']['price'];
+        $imageUrls['currency'] = $jsonContent['offers']['priceCurrency'];
+        $imageUrls['sku'] = $jsonContent['sku'];
+        $imageUrls['title'] = $jsonContent['name'];
+        $imageUrls['images'][] = $jsonContent['image'];
+        return $imageUrls;
+
+    }
+    function extractTemu($url)
+    {
+
+        $client = new \Goutte\Client();
+
+        $parsedUrl = parse_url($url);
+        $host = $parsedUrl['host'];
+
+        $domainParts = explode('.', $host);
+        $imageUrls = array();
+
+        $domain = $domainParts[count($domainParts) - 2];
+        $imageUrls['images'] = array();
+        $imageUrls['website'] = $domain;
+        $crawler = $client->request('GET', $url);
+        $title = $crawler->filter('title')->first();
+        $imageUrls['title'] = $title->text();
+
+        $price = $crawler->filter('meta[property="product:price:amount"]')->attr('content');
+        $currency = $crawler->filter('meta[property="product:price:currency"]')->attr('content');
+        $imageUrls['price'] = $price;
+        $crawler->filter('script[type="application/ld+json"]')->each(function ($node) use (&$imageUrls) {
+            $data = json_decode($node->text(), true);
+            if (isset ($data['@type']) && $data['@type'] === 'Product' && isset ($data['image'])) {
+                foreach ($data['image'] as $image) {
+                    if (isset ($image['contentURL'])) {
+                        $imageUrls['images'][] = $image['contentURL'];
+                    }
+                }
+            }
         });
         return $imageUrls;
     }
@@ -1792,14 +1887,12 @@ class OrderController extends Controller
     public function getSiteContent(Request $request)
     {
         $url = $request->site_url;
+        $product = array();
 
         $product = $this->scrapeProductImages($url);
         $client = new Client(['verify' => false]);
 
-
-
-
-
+        // dd($product);
         $title = $product['title'];
         $website = $product['website'];
         $price = preg_replace('/[^0-9.]/', "", $product['price']);
