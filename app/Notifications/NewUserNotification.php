@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Notifications;
+
 use App\Models\User;
 use App\Models\Admin;
 use App\Models\EmailTemplate;
@@ -12,8 +13,6 @@ use App\Traits\SmtpTrait;
 
 class NewUserNotification extends Notification
 {
-    use Queueable;
-
     /**
      * Create a new notification instance.
      */
@@ -22,21 +21,21 @@ class NewUserNotification extends Notification
     protected $user;
 
     protected $template;
-    
+
     protected $shortCodes;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct(EmailTemplate $template = null , $shortCodes = [],$user = null)
+    public function __construct(EmailTemplate $template = null, $shortCodes = [], $user = null)
     {
-       
+
         $this->user = $user;
 
         $this->template = $template;
-        
-        $this->shortCodes = $shortCodes; 
-       
+
+        $this->shortCodes = $shortCodes;
+
         $this->setMailConfigs();
     }
     /**
@@ -46,7 +45,7 @@ class NewUserNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', 'mail'];
     }
 
     /**
@@ -54,10 +53,14 @@ class NewUserNotification extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
-                    ->line('The introduction to the notification.')
-                    ->action('Notification Action', url('/'))
-                    ->line('Thank you for using our application!');
+        $body = shortCodeBodyReplacer($this->template->body, $this->shortCodes, $notifiable);
+        try {
+            return(new MailMessage)
+                ->subject($this->template->subject)
+                ->view('admin.emails.email.custom', ['body' => $body]); // Pass any necessary template to the view
+        } catch (\Exception $e) {
+            $e->getMessage();
+        }
     }
 
     /**
@@ -67,10 +70,10 @@ class NewUserNotification extends Notification
      */
     public function toArray(object $notifiable): array
     {
-        return  [
+        return [
             'data' => $this->user->toArray(),
-            'type' => 'User' ,
-            'created_by' => 1 ,
+            'type' => 'User',
+            'created_by' => 1,
         ];
     }
 }

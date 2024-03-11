@@ -27,16 +27,16 @@ class UserCreated
     /**
      * Create a new event instance.
      */
-    public function __construct($template = null, $shortCodes = [],$user = null , $notifiable = null , $eventName = null)
+    public function __construct($template = null, $shortCodes = [], $user = null, $notifiable = null, $eventName = null)
     {
         $this->template = $template;
 
         $this->shortCodes = $shortCodes;
-        
-        $this->user = $user;
 
+        $this->user = $user;
+     
         $this->notifiable = $notifiable;
-        
+
         $this->eventName = $eventName;
     }
 

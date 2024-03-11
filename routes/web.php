@@ -114,7 +114,19 @@ Route::get('/getroutes', function () {
 Route::get('/', function () {
     // $url = 'https://www.amazon.com/Bounty-Quick-Size-Paper-Towels-Family/dp/B079VP6DH5/ref=sr_1_3?adgrpid=127260490003&dib=eyJ2IjoiMSJ9.DIqIqYixXjxg68Eg7rKKHGgByS_HHs5tueeQ5qxjSN3UATxXyfJsyF91j13hDRMM8ID32ovqfkAbQ6lbXAFXBlXqO9eYDQD_axo6L6NqiVjMK7gQBt_4UTqY6ZMufPgC7Jr3k7ImIZVpceHWDRqpa39e3a2f1mAIhuTrEDX6G8s3h2GwxALcYuMzylQCPaicXTC9ezc7PKxMkWCBLpjKetwyMaPNaqHGrXFWPwgB2DgmYNpBswc1Uz67KmR-BB1a966PcvlTItNjUQoQ-VfLKTkfMw6ZhXCoBfuuRa_hbfc.8pIh7Ly-j14PiaO3g2xkLg9Or5H4hDpN-t-p265Q-gk&dib_tag=se&hvadid=585479351039&hvdev=c&hvlocphy=1011084&hvnetw=g&hvqmt=b&hvrand=14608782360802479668&hvtargid=kwd-321362582074&hydadcr=27983_14525522&keywords=amazon.com&qid=1709534985&sr=8-3';
 
+    // $profile = 'myurl';
 
+    //        $process = Process::fromShellCommandLine(
+    //        "node app/scripts/index.js $profile",null,null,null,240);
+
+    // $command = "node app/Scripts/index.js";
+
+    // $output = '';
+    // $returnCode = '';
+
+    // exec($command, $output, $returnCode);
+    // $var = $output;
+    // dd($var);
     // // $response = Http::get($url);
 
     // $proxy = '117.69.233.193:8089'; // Replace with your proxy details

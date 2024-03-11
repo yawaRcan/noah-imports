@@ -426,15 +426,18 @@ class OrderController extends Controller
         $imageUrls['website'] = $domain;
 
         $crawler = $client->request('GET', $url);
+        $title = $crawler->filter('.vim .x-item-title .x-item-title__mainTitle span')->first();
+        $price = $crawler->filter('.vim .x-bin-price .x-bin-price__content .x-price-primary span')->first();
+        $size = $crawler->filter('.x-msku__box-cont .x-msku__label .x-msku__select-box-wrapper .x-msku__select-box')->first();
+        $quantity = $crawler->filter('.d-quantity__value .d-quantity__wrapper .textbox__control')->first();
+        if ($quantity->count() > 0) {
+            $quantityValue = $quantity->attr('value');
 
-        $title = $crawler->filter('.x-item-title h1 span')->first();
+        } else {
+            $quantityValue = 0;
+        }
 
-        // $shipPrice = $crawler->filter('.ux-labels-values--shipping .col-9 .ux-labels-values__values-content span');
 
-        // $shipPrice->each(function (Crawler $element) use (&$imageUrls) {
-
-        //     $imageUrls['shipment_price'][] = $element->text();
-        // });
 
         $itemNumber = $crawler->filter('.ux-layout-section__textual-display--itemId span');
 
@@ -451,31 +454,25 @@ class OrderController extends Controller
 
 
         $imageUrls['title'] = $title->text();
-
-        $price = $crawler->filter('.x-price-primary .ux-textspans')->first();
-        $string = "US $349.00";
-        $pattern = '/\d+(\.\d+)?/';  // Regular expression pattern to match the price 
-        preg_match($pattern, $price->text(), $matches);
-        if (!empty($matches)) {
-            $price = $matches[0];
-            $imageUrls['price'] = $price;  // Output: 349.00
-        } else {
-            $imageUrls['price'] = 0;
-        }
-
-
+        $imageUrls['price'] = $price->text();
+        $imageUrls['size'] = $size->text();
+        $imageUrls['quantity'] = $quantityValue;
+        // $string = "US $349.00";
+        // $pattern = '/\d+(\.\d+)?/';  // Regular expression pattern to match the price 
+        // preg_match($pattern, $price->text(), $matches);
+        // if (!empty($matches)) {
+        //     $price = $matches[0];
+        //     $imageUrls['price'] = $price;  // Output: 349.00
+        // } else {
+        //     $imageUrls['price'] = 0;
+        // }
         // Use CSS selectors to find the product image elements
-        $imageElements = $crawler->filter('.ux-image-filmstrip-carousel-item');
-
-        // Extract the image URLs
+        $imageElements = $crawler->filter('.rounded-edges img');
         $imageElements->each(function (Crawler $element) use (&$imageUrls) {
-
-            $element = $element->filter('img');
+            // $element = $element->filter('img');
             $imageUrl = $element->attr('src');
-
             $imageUrls['images'][] = $imageUrl;
         });
-
         return $imageUrls;
     }
 
@@ -510,13 +507,12 @@ class OrderController extends Controller
 
         // Use CSS selectors to find the product image elements
         $imageElements = $crawler->filter('.detail-product-image .image-list .image-list-slider .main-item img ');
-
+        // dd($imageElements);
         // Extract the image URLs
         $imageElements->each(function (Crawler $element) use (&$imageUrls) {
 
 
             $imageUrl = $element->attr('src');
-
             $imageUrls['images'][] = $imageUrl;
         });
         return $imageUrls;
@@ -659,7 +655,8 @@ class OrderController extends Controller
 
         $crawler = $client->request('GET', $url);
 
-        $title = $crawler->filter('#productTitle')->first();
+        $title = $crawler->filter('.a-section .a-spacing-none .a-size-large .a-spacing-none .a-color-secondary span')->first();
+        
         $imageUrls['title'] = $title->text();
 
         $imageElements = $crawler->filter('span span span img');
@@ -1898,9 +1895,19 @@ class OrderController extends Controller
         $price = preg_replace('/[^0-9.]/', "", $product['price']);
         $itemNumber = @$product['item_number'];
         $imageUrls = $product['images'];
+
+
+        if (isset($product['size']) && isset($product['quantity'])) {
+            $size = $product['size'];
+            $quantity = $product['quantity'];
+        } else {
+            $size = null;
+            $quantity = null;
+
+        }
         if (count($imageUrls) > 0) {
 
-            $html = view('admin.purchasing.product_images', compact('imageUrls', 'title', 'website', 'price', 'itemNumber'))->render();
+            $html = view('admin.purchasing.product_images', compact('imageUrls', 'title', 'website', 'price', 'itemNumber', 'size', 'quantity'))->render();
             $notify = ['success' => "Product images fetched successfully", 'html' => $html];
         } else {
 

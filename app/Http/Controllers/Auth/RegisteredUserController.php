@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Config;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Jobs\UserRegMailToAdmins;
 
 class RegisteredUserController extends Controller
 {
@@ -55,6 +56,10 @@ class RegisteredUserController extends Controller
      */
     public function store(RegisterRequest $request)
     {
+        
+        ini_set('max_execution_time', 500);
+        ini_set('memory_limit', '700M');
+
         $id = User::orderBy('id', 'desc')->pluck('id')->first();
 
         if ($id) {
@@ -94,18 +99,23 @@ class RegisteredUserController extends Controller
             $verificationUrl = $this->verificationUrl($user);
             $shortCodes = [
                 'VERIFY_URL' => $verificationUrl,
-                'name' => $user->first_name . ' ' . $user->last_name,
+                'username' => $user->username,
+                'UserFullname' => $user->first_name . ' ' . $user->last_name,
                 'email' => $user->email,
                 'password' => $request->password,
                 'image' => $request->image,
-                'phone' => $request->phone
+                'phone' => $request->phone,
+                'country' => $request->initial_country
             ];
-            // return $this->verificationUrl($user);
-
-            //Send notification to user
-            $admin = Admin::first();
-            // $event= event(new UserCreated($template , $shortCodes, $user, $admin, 'RegisterUser'));
             $event = event(new UserEvent($template, $shortCodes, $user, $user, 'RegisterUser'));
+
+            UserRegMailToAdmins::dispatch($user,$shortCodes);
+            // return $this->verificationUrl($user);
+            //Send notification to user
+            // dispatch(new UserRegMailToAdmins($user, $template, $shortCodes));
+            // Send notification to all admins
+
+            
 
         }
 

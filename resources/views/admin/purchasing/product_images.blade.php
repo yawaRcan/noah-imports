@@ -25,6 +25,7 @@
 <div class="card shadow text-start">
     <div class="card-body">
         <div class="row">
+         
             @foreach($imageUrls as $key => $url)
             <div class="col-6 col-sm-6 col-md-4 mt-2">
                 <div class="image-container">
@@ -51,6 +52,10 @@ $('#product_name-item').val("{{$title}}");
 $('#product_website-item').val("{{$website}}");
 $('#price-item').val("{{$price}}"); 
 $('.item-number').val("{{$itemNumber}}"); 
+$('#quantity').val("{{$quantity}}"); 
+$('#size').attr("placeholder","{{$size}}"); 
+
+
 
 selectableImages.forEach((image) => {
   image.addEventListener('click', () => { 

@@ -28,7 +28,7 @@ class NotifyAdminOnUserCreation
      */
     public function handle(UserCreated $event): void
     {
-
+     
         Notification::send($event->notifiable, new NewUserNotification($event->template, $event->shortCodes, $event->user));
     }
 }
