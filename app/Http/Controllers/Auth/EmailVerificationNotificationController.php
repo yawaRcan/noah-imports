@@ -25,7 +25,7 @@ class EmailVerificationNotificationController extends Controller
         }
 
         // $request->user()->sendEmailVerificationNotification();
-        $template = EmailTemplate::where('slug', 'registration-user')->first();
+        $template = EmailTemplate::where('slug', 'verification-mail')->first();
 
         if ($template) {
             $user = $request->user();

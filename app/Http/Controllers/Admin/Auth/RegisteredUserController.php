@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin\Auth;
 
 use App\Events\UserEvent;
+use App\Jobs\AdminRegMailToAdmin;
+use App\Jobs\UserRegMailToAdmins;
 use App\Models\Admin;
 use App\Models\EmailTemplate;
 use Illuminate\View\View;
@@ -61,32 +63,25 @@ class RegisteredUserController extends Controller
 
         // event(new Registered($user));
         $template = EmailTemplate::where('slug', 'registration-user')->first();
-        $template2 = EmailTemplate::where('slug', 'admin-registeration')->first();
+
 
         if ($template) {
             $verificationUrl = $this->verificationUrl($user);
             $shortCodes = [
                 'VERIFY_URL' => $verificationUrl,
                 'name' => $user->first_name . ' ' . $user->last_name,
+                'Newadmin'=>$user->first_name . ' ' . $user->last_name,
                 'email' => $user->email,
                 'password' => $request->password,
-                'image'=>$request->image,
-                'phone'=>$request->phone
+                'image' => $request->image,
+                'phone' => $request->phone,
+                'regdate' => now()
             ];
             //Send notification to user 	admin-registeration
-            event(new UserEvent($template, $shortCodes, $user, $user, 'RegisterUser'));
+            // event(new UserEvent($template, $shortCodes, $user, $user, 'RegisterUser'));
         }
-        if ($template2) {
-            $shortCodes = [
-                'name' => $user->first_name . ' ' . $user->last_name,
-                'email' => $user->email,
-                'username' => $user->username,
-                'password' => $request->password,
-                'image'=>$request->image,
-                'phone'=>$request->phone
-            ];
-            event(new UserEvent($template2, $shortCodes, $user, $user, 'RegisterUser'));
-        }
+        AdminRegMailToAdmin::dispatch($user, $shortCodes);
+
 
         Auth::guard('admin')->login($user);
 

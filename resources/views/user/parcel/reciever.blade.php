@@ -83,7 +83,7 @@
 
 <script>
      var inputJquery = document.querySelector("#contact_no");
-
+     
      var iti = intlTelInput(inputJquery, {
          utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.21/js/utils.js"
      });
@@ -102,6 +102,10 @@
              $.get('https://ipinfo.io', function() {}, "json").always(function(resp) {
                  var countryCode = (resp && resp.country) ? resp.country : "us";
                  callback(countryCode);
+                 console.log('hm');
+                 $('#initial_country').val(countryCode);
+                 
+
              });
          },
          hiddenInput: "",
@@ -168,25 +172,31 @@
          input.addEventListener('change', reset);
          input.addEventListener('keyup', reset);
      }
+     console.log('yes');
 
+    //  getFullData();
      //Get country data
      function getFullData(input) {
-         var code, phone, name, country_code, isvalid;
-         code = iti.getSelectedCountryData().dialCode;
-         phone = $('#contact_no').val(); 
-         name = iti.getSelectedCountryData().name;
-         country_code = iti.getSelectedCountryData().iso2;
-         isvalid = iti.isValidNumber();
-         $('#phone_complete').val(phone);
-        $('#country_code').val(code);
-        $('#initial_country').val(country_code);
-        $('#isvalid').val(isvalid);
-         return {
-             'code': code,
-             'phone': phone,
-             'name': name,
-             'country_code': country_code,
-             'valid': isvalid
-         };
+        
+                var code, phone, name, country_code, isvalid;
+                code = contact.getSelectedCountryData().dialCode;
+                phone = $('#contact_no').val();
+                console.log(phone);
+                name = contact.getSelectedCountryData().name;
+                country_code = contact.getSelectedCountryData().iso2;
+                isvalid = contact.isValidNumber();
+                $('#phone_complete').val(phone);
+                $('#country_code').val(code);
+                $('#initial_country').val(country_code);
+                $('#isvalid').val(isvalid);
+                console.log(code, phone, name, country_code, isvalid)
+                return {
+                    'code': code,
+                    'phone': phone,
+                    'name': name,
+                    'country_code': country_code,
+                    'valid': isvalid
+                };
+            
      } 
  </script>

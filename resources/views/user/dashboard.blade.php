@@ -1292,7 +1292,7 @@
     $(document).ready(function() { 
     //  document.body.classList.add('blur-effect'); 
     let url = "{{route('user.checkShipper')}}";
-    $('#ni-rec-add-first').modal({
+    $('#c').modal({
     backdrop: 'static',
     keyboard: false // Prevent closing the modal with the keyboard ESC key
   });

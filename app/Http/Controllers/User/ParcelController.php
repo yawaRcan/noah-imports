@@ -1109,10 +1109,9 @@ class ParcelController extends Controller
         $shipping->email = $request->email;
 
         $shipping->initial_country = $request->initial_country;
-
         $shipping->country_code = $request->country_code;
-
-        $shipping->phone = $request->phone;
+        $shipping->phone = $request->contact_no;
+        // dd($request->contact_no);
 
         $shipping->state = $request->state;
 

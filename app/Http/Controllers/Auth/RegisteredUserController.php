@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Models\Branch;
 use App\Models\User;
 use App\Models\Admin;
 use App\Events\UserEvent;
@@ -56,7 +57,7 @@ class RegisteredUserController extends Controller
      */
     public function store(RegisterRequest $request)
     {
-        
+
         ini_set('max_execution_time', 500);
         ini_set('memory_limit', '700M');
 
@@ -90,6 +91,7 @@ class RegisteredUserController extends Controller
             'ref_no' => 123,
             'invite_no' => 123,
         ]);
+        $branch = Branch::first();
         // event(new Registered($user));
         $template = EmailTemplate::where('slug', 'registration-user')->first();
 
@@ -105,17 +107,23 @@ class RegisteredUserController extends Controller
                 'password' => $request->password,
                 'image' => $request->image,
                 'phone' => $request->phone,
-                'country' => $request->initial_country
+                'country' => $request->initial_country,
+                'directionline1' => $branch->address_line,
+                'addressline2' => $branch->address,
+                'branchcountry' => $branch->country,
+                'branchstate' => $branch->state,
+                'branchphone' => $branch->phone
+
             ];
             $event = event(new UserEvent($template, $shortCodes, $user, $user, 'RegisterUser'));
 
-            UserRegMailToAdmins::dispatch($user,$shortCodes);
+            UserRegMailToAdmins::dispatch($user, $shortCodes);
             // return $this->verificationUrl($user);
             //Send notification to user
             // dispatch(new UserRegMailToAdmins($user, $template, $shortCodes));
             // Send notification to all admins
 
-            
+
 
         }
 

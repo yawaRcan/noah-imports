@@ -34,8 +34,6 @@ class UserRegMailToAdmins implements ShouldQueue
      */
     public function handle(): void
     {
-
-
         $admins = Admin::all();
         $template = EmailTemplate::where('slug', 'Notify_admin_onUser_Reg')->first();
         // $this->shortCodes['adminName'] = $admins->first_name . ' ' . $admins->last_name;
