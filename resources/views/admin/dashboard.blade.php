@@ -409,7 +409,7 @@
                                 @forelse($data['latest_orders'] as $order)
                                 <tr>
                                     <td><a href="{{route('purchasing.order.list')}}" target="_blank">{{$order->code}}</a></td>
-                                    <td>{{$order->shipperAddress->name}} - {{$order->user->first_name}} {{$order->user->last_name}}</td>
+                                    <td>{{$order->shipperAddress->name}} - {{$order->user?->first_name}} {{$order->user?->last_name}}</td>
                                     <td>{{$order->deliveryStatus->name}}</td>
                                     <td>{{$order->currency->symbol}} {{number_format($order->total,2)}}</td>
                                 </tr>
