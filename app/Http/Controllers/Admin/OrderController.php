@@ -88,7 +88,6 @@ class OrderController extends Controller
             if (isset($parts['scheme']) && isset($parts['host'])) {
 
                 $mainLink = $parts['scheme'] . "://" . $parts['host'];
-
             } else {
 
                 return [];
@@ -151,8 +150,10 @@ class OrderController extends Controller
             } elseif ($mostMatchedString === 'temuStr') {
                 $imageUrls = $this->extractTemu($url);
             } elseif ($mostMatchedString === 'sheinStr') {
+
                 $imageUrls = $this->extractShein($url);
             } elseif ($mostMatchedString === 'normalStr') {
+
                 if (!$imageUrls) {
 
                     $imageUrls = $this->extractfigure($url);
@@ -478,6 +479,7 @@ class OrderController extends Controller
 
     function extractAliBaba($url)
     {
+
         $client = new \Goutte\Client();
 
         $parsedUrl = parse_url($url);
@@ -493,10 +495,11 @@ class OrderController extends Controller
         $title = $crawler->filter('.product-title-container h1')->first();
         $imageUrls['title'] = $title->text();
 
-        $price = $crawler->filter('.product-price .price-list .price-item span')->first();
+        $price = $crawler->filter('.product-price .price-list .price-range span')->first();
         $pattern = '/\d+(\.\d+)?/';  // Regular expression pattern to match the price 
         preg_match($pattern, $price->text(), $matches);
         $imageUrls['price'] = $price->text();
+        // dd($price->text());
         // if (!empty($matches)) {
         //     $price = $matches[0];
         //     $imageUrls['price'] = $price;  // Output: 349.00
@@ -536,11 +539,6 @@ class OrderController extends Controller
         // dd($scriptTag);
         $scriptContent = $scriptTag->text();
         $jsonContent = json_decode($scriptContent, true);
-
-
-        // dd($jsonContent['offers']['price']);
-
-
         // $jsonContent = [ // app\Http\Controllers\Admin\OrderController.php:541
         //     "@context" => "https://schema.org/",
         //     "@type" => "Product",
@@ -590,6 +588,8 @@ class OrderController extends Controller
         $price = $crawler->filter('meta[property="product:price:amount"]')->attr('content');
         $currency = $crawler->filter('meta[property="product:price:currency"]')->attr('content');
         $imageUrls['price'] = $price;
+        $imageUrls['currency'] = $currency;
+
         $crawler->filter('script[type="application/ld+json"]')->each(function ($node) use (&$imageUrls) {
             $data = json_decode($node->text(), true);
             if (isset ($data['@type']) && $data['@type'] === 'Product' && isset ($data['image'])) {
@@ -605,6 +605,7 @@ class OrderController extends Controller
 
     function extractAliBabaSale($url)
     {
+
         $client = new \Goutte\Client();
 
         $parsedUrl = parse_url($url);
@@ -1040,7 +1041,7 @@ class OrderController extends Controller
         $eGaroshiTax = $adminfee;
         // egaratoshi tax
 
-//tenOrderFess
+        //tenOrderFess
         $cal = ($adminfee * 1.1) + 2;
         if ($request->discountCheck) {
             $discountA = isset($request->discountA) ? intval($request->discountA) : 0;
@@ -1896,7 +1897,11 @@ class OrderController extends Controller
         $itemNumber = @$product['item_number'];
         $imageUrls = $product['images'];
 
-
+        if (isset($product['currency'])) {
+            $currency = $product['currency'];
+        } else {
+            $currency = 'USD';
+        }
         if (isset($product['size']) && isset($product['quantity'])) {
             $size = $product['size'];
             $quantity = $product['quantity'];
@@ -1907,7 +1912,7 @@ class OrderController extends Controller
         }
         if (count($imageUrls) > 0) {
 
-            $html = view('admin.purchasing.product_images', compact('imageUrls', 'title', 'website', 'price', 'itemNumber', 'size', 'quantity'))->render();
+            $html = view('admin.purchasing.product_images', compact('imageUrls', 'title', 'website', 'price', 'itemNumber', 'size', 'quantity', 'currency'))->render();
             $notify = ['success' => "Product images fetched successfully", 'html' => $html];
         } else {
 

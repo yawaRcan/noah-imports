@@ -15,25 +15,25 @@ use App\Http\Controllers\Controller;
 class DashboardController extends Controller
 {
     public function index()
-    {   
-      
-      
+    {
+
+
         $ids = DB::table('consolidate_pivot')->pluck('parcel_id')->toArray();
-        $data['parcels']  = Parcel::orderBy('id', 'desc')->whereNull('drafted_at')->whereNotIn('id', $ids)->get();
-        $data['activeParcels']  = Parcel::whereHas('parcelStatus', function($query) {
+        $data['parcels'] = Parcel::orderBy('id', 'desc')->whereNull('drafted_at')->whereNotIn('id', $ids)->get();
+        $data['activeParcels'] = Parcel::whereHas('parcelStatus', function ($query) {
             $query->where('slug', 'active');
         })->get();
-      
-       
-        
-        $data['orders']  = Order::get();
-        $data['consolidates']  = Consolidate::get();
-        $data['customers']  = User::count();
-        $data['approved_transactions']  = Wallet::where('status','approved')->sum('amount_converted');
-        $data['payment_recieved']  = Parcel::where('payment_status_id',2)->sum('amount_total');
-        $data['latest_wallets']  = Wallet::latest()->take(5)->get();
-        $data['latest_orders']  = Order::latest()->take(5)->get();
-       
+
+
+
+        $data['orders'] = Order::get();
+        $data['consolidates'] = Consolidate::get();
+        $data['customers'] = User::count();
+        $data['approved_transactions'] = Wallet::where('status', 'approved')->sum('amount_converted');
+        $data['payment_recieved'] = Parcel::where('payment_status_id', 2)->sum('amount_total');
+        $data['latest_wallets'] = Wallet::latest()->take(5)->get();
+        $data['latest_orders'] = Order::latest()->take(5)->with('user')->get();
+
 
         $currentYear = Carbon::now()->year;
 
@@ -42,18 +42,18 @@ class DashboardController extends Controller
                                 SUM(CASE WHEN payment_status_id = "2" THEN 1 ELSE 0 END) as paid_count,
                                 SUM(CASE WHEN payment_status_id = "1" THEN 1 ELSE 0 END) as unpaid_count,
                                 SUM(CASE WHEN payment_status_id = "3" THEN 1 ELSE 0 END) as pending_count')
-                    ->whereYear('created_at', $currentYear)
-                    ->groupBy('month')
-                    ->get()
-                    ->groupBy('month')
-                    ->map(function ($items) {
-                        return [
-                            'paid_count' => $items->sum('paid_count'),
-                            'unpaid_count' => $items->sum('unpaid_count'),
-                            'pending_count' => $items->sum('pending_count'),
-                        ];
-                    })
-                    ->toArray();
+            ->whereYear('created_at', $currentYear)
+            ->groupBy('month')
+            ->get()
+            ->groupBy('month')
+            ->map(function ($items) {
+                return [
+                    'paid_count' => $items->sum('paid_count'),
+                    'unpaid_count' => $items->sum('unpaid_count'),
+                    'pending_count' => $items->sum('pending_count'),
+                ];
+            })
+            ->toArray();
 
         // Initialize empty arrays for each count
         $paidCountArray = array_fill(1, 12, 0);
@@ -80,25 +80,25 @@ class DashboardController extends Controller
             ->pluck('total', 'month')
             ->toArray();
 
-           
 
-           $totalActiveParcels=DB::table('parcels')
-           ->join('config_statuses', 'config_statuses.id', '=', 'parcels.parcel_status_id')
-           ->selectRaw('EXTRACT(MONTH FROM parcels.created_at) as month')
-           ->selectRaw('COUNT(*) as total')
-           ->whereYear('parcels.created_at', $currentYear)
-           ->where('config_statuses.slug','active')
-           ->groupBy('month')
-           ->orderBy('month')
-           ->pluck('total', 'month')
+
+        $totalActiveParcels = DB::table('parcels')
+            ->join('config_statuses', 'config_statuses.id', '=', 'parcels.parcel_status_id')
+            ->selectRaw('EXTRACT(MONTH FROM parcels.created_at) as month')
+            ->selectRaw('COUNT(*) as total')
+            ->whereYear('parcels.created_at', $currentYear)
+            ->where('config_statuses.slug', 'active')
+            ->groupBy('month')
+            ->orderBy('month')
+            ->pluck('total', 'month')
             ->toArray();
-           
-            
-       
-          
-             
 
-          
+
+
+
+
+
+
 
 
 
@@ -128,11 +128,11 @@ class DashboardController extends Controller
 
 
 
-        
+
         // Fill in any missing months with 0 count
         for ($month = 1; $month <= 12; $month++) {
-            
-           
+
+
             if (!isset($totalActiveParcels[$month])) {
                 $totalActiveParcels[$month] = 0;
             }
@@ -140,7 +140,7 @@ class DashboardController extends Controller
             if (!isset($totalParcels[$month])) {
 
                 $totalParcels[$month] = 0;
-              
+
             }
 
             if (!isset($totalOrders[$month])) {
@@ -156,17 +156,17 @@ class DashboardController extends Controller
             }
         }
 
-        
-    
-      
+
+
+
         ksort($totalParcels);
         $totalParcelsArray = array_values($totalParcels);
 
         ksort($totalActiveParcels);
         $totalActiveParcelsArray = array_values($totalActiveParcels);
-       
-      
-      
+
+
+
         $totalOrdersArray = array_values($totalOrders);
 
         ksort($totalConsolidates);
@@ -176,8 +176,8 @@ class DashboardController extends Controller
         $totalUsersArray = array_values($totalUsers);
 
 
-       
-    
-        return view('admin.dashboard',compact('data','parcelCountresult','totalParcelsArray','totalOrdersArray','totalConsolidatesArray','totalUsersArray','totalActiveParcelsArray'));
+
+
+        return view('admin.dashboard', compact('data', 'parcelCountresult', 'totalParcelsArray', 'totalOrdersArray', 'totalConsolidatesArray', 'totalUsersArray', 'totalActiveParcelsArray'));
     }
 }

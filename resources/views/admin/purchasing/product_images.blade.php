@@ -53,6 +53,7 @@ $('#product_website-item').val("{{$website}}");
 $('#price-item').val("{{$price}}"); 
 $('.item-number').val("{{$itemNumber}}"); 
 $('#quantity').val("{{$quantity}}"); 
+$('#currencyId').text("{{$currency}}");
 $('#size').attr("placeholder","{{$size}}"); 
 
 
