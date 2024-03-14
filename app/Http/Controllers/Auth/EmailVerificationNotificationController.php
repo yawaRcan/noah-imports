@@ -38,6 +38,7 @@ class EmailVerificationNotificationController extends Controller
             event(new UserEvent($template, $shortCodes, $user, $user, 'RegisterUser'));
 
         }
+       
 
         return back()->with('status', 'verification-link-sent');
     }

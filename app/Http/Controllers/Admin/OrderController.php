@@ -656,7 +656,7 @@ class OrderController extends Controller
         $crawler = $client->request('GET', $url);
 
         $title = $crawler->filter('.a-section .a-spacing-none .a-size-large .a-spacing-none .a-color-secondary span')->first();
-        
+
         $imageUrls['title'] = $title->text();
 
         $imageElements = $crawler->filter('span span span img');
@@ -1034,14 +1034,13 @@ class OrderController extends Controller
 
 
         $CalcOld = intval($request->subtotal) - (intval($request->old_shipping_price) + intval($request->old_tax));
-        $getsubtotal = $CalcOld + (intval($request->shipping_price) + intval($request->tax));
-
+        $getsubtotal = $CalcOld + ((intval($request->shipping_price)) + intval(($request->tax)));
         $paypalFee = ($getsubtotal * 4.62 / 100) + 0.3;
         $adminfee = $getsubtotal + $paypalFee + 3.1;
         $eGaroshiTax = $adminfee;
         // egaratoshi tax
 
-
+//tenOrderFess
         $cal = ($adminfee * 1.1) + 2;
         if ($request->discountCheck) {
             $discountA = isset($request->discountA) ? intval($request->discountA) : 0;
@@ -1050,6 +1049,7 @@ class OrderController extends Controller
         }
         $percent = ($cal * intval($discountA)) / 100;
         $total = $cal - $percent;
+
         $currency = Currency::findOrFail($request->currency_id);
         $total_Converted = $total * $currency->value;
         $total_Converted = number_format($total_Converted, 2);

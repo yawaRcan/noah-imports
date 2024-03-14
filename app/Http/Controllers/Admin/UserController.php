@@ -125,6 +125,7 @@ class UserController extends Controller
         $wallets = Wallet::where('morphable_id', $id)->whereHasMorph('morphable', [User::class])->get();
         $user = User::findOrFail($id);
         $geoLocation = Location::get($user->ip);
+
         // $ip = "154.192.158.8"; /* Static IP address */
         // $geoLocation = Location::get($ip);
         // dd($geoLocation);

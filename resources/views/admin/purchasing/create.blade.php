@@ -315,7 +315,11 @@
                                                         <div class="col-md-3">
                                                             <select class="form-control" name="currency_id">
                                                                 @foreach($currencies as $currency)
-                                                                <option value="{{$currency->id}}">{{$currency->name}} - {{$currency->symbol}}</option>
+                                                                @php
+                                                                     $currencyId =$currency->id;
+                                                                @endphp
+                                                               
+                                                                <option value="{{$currency->id}}" id="currencyId">{{$currency->name}} - {{$currency->symbol}}</option>
                                                                 @endforeach
                                                             </select>
                                                         </div>
@@ -474,15 +478,15 @@
                                                             </select>
                                                         </td>
                                                     </tr> -->
-                                                    <input type="hidden" name="subtotal" value="{{$cal->total}}">
+                                                    <input type="hidden" name="subtotal"id="subtotal" value="{{$cal->total}}">
                                                     <input type="hidden" name="shipping_price" value="{{$cal->shipping ?? '00.0'}}">
                                                     <input type="hidden" name="tax" value="{{$cal->tax ?? '00.0'}}">
                                                     <tr>
                                                         <td colspan="3"><strong>Shipping Price</strong></td>
                                                         <td class="text-right d-flex align-items-center">
                                                             <strong> {{$cartData[0]->purchase->currency->symbol ?? 'N/A'}}</strong>
-                                                            <input type="text" name="shipping_price" class="form-control " value="{{$cal->shipping ?? '00.0'}}"  style="border:none !important;">
-                                                            <input type="hidden" name="old_shipping_price" value=" {{$cal->shipping ?? '00.0'}}" style="border:none !important;">
+                                                            <input type="text" name="shipping_price" class="form-control editAble_inputs " value="{{$cal->shipping ?? '00.0'}}" id="New_shipping_price_input" >
+                                                            <input type="hidden" name="old_shipping_price" id="old_shipping_price" value=" {{$cal->shipping ?? '00.0'}}" style="border:none !important;">
     
                                                             {{-- <strong>{{$cartData[0]->purchase->currency->symbol ?? 'N/A'}} {{$cal->shipping ?? '00.0'}}</strong> --}}
                                                         </td>
@@ -491,8 +495,8 @@
                                                         <td colspan="3"><strong>Tax</strong></td>
                                                         <td class="text-right d-flex align-items-center">
                                                            <strong> {{$cartData[0]->purchase->currency->symbol ?? 'N/A'}}</strong>
-                                                            <input type="text" name="tax" class="form-control " value="{{$cal->tax ?? '00.0'}}" style="border:none !important;">
-                                                            <input type="hidden" name="old_tax" value="{{$cal->tax ?? '00.0'}}" style="border:none !important;">
+                                                            <input type="text" name="tax" class="form-control editAble_inputs" value="{{$cal->tax ?? '00.0'}}" id="New_tax_price_input" >
+                                                            <input type="hidden" name="old_tax" id="old_tax" value="{{$cal->tax ?? '00.0'}}" style="border:none !important;">
     
                                                             {{-- <strong>{{$cartData[0]->purchase->currency->symbol ?? 'N/A'}} {{$cal->tax ?? '00.0'}}</strong> --}}
                                                         </td>
@@ -500,35 +504,40 @@
                                                     <tr>
                                                         <td colspan="3"><strong>Item Price</strong></td>
                                                         <td class="text-right">
-                                                            <strong>{{$cartData[0]->purchase->currency->symbol ?? 'N/A'}} {{$cal->total ?? '00.0'}}</strong>
+                                                            <strong >{{$cartData[0]->purchase->currency->symbol ?? 'N/A'}} <span id="total">{{$cal->total ?? '00.0'}}</span></strong>
                                                         </td>
                                                     </tr>
                                                     <tr>
-                                                        <td colspan="3"><strong>Paypal Fee ( % )</strong></td>
+                                                        <td colspan="3"><strong>Paypal Fee ( % ) </strong></td>
                                                         <td class="text-right">
-                                                            <strong>{{$cartData[0]->purchase->currency->symbol ?? 'N/A'}} {{$cal->paypal ?? '00.0'}}</strong>
+                                                            <strong>{{$cartData[0]->purchase->currency->symbol ?? 'N/A'}} <span id="paypalFee">{{$cal->paypal ?? '00.0'}}</span> </strong>
                                                         </td>
                                                     </tr>
                                                     <tr>
                                                         <td colspan="3"><strong>Item Price & Administration Fee & Paypal</strong></td>
                                                         <td class="text-right">
-                                                            <strong>{{$cartData[0]->purchase->currency->symbol ?? 'N/A'}} {{$cal->adminFee ?? '00.0'}}</strong>
+                                                            <strong>{{$cartData[0]->purchase->currency->symbol ?? 'N/A'}} <span id="adminFee">{{$cal->adminFee ?? '00.0'}}</span></strong>
                                                         </td>
                                                     </tr>
                                                     <input type="hidden" name="eGaroshiTax" value="{{$adminFee ?? '00.0'}}">
     
                                                     <input type="hidden" name="total" value="{{$cal->tenOrderFee?? '00.0'}}">
                                                     <tr>
-                                                        <td colspan="3"><strong>10% Order Fee</strong></td>
+                                                        <td colspan="3"><strong>10% Order Fee </strong></td>
                                                         <td class="text-right">
-                                                            <strong>{{$cartData[0]->purchase->currency->symbol ?? 'N/A'}} {{$cal->tenOrderFee ?? '00.0'}}</strong>
+                                                            <strong>{{$cartData[0]->purchase->currency->symbol ?? 'N/A'}} <span id="orderFee">{{$cal->tenOrderFee ?? '00.0'}}</span></strong>
                                                         </td>
                                                     </tr>
+                                                    @php
+                                                       $currency  = DB::table('currencies')->where('id',$currencyId)->first();
+                                                    @endphp
+                                                    <input type="hidden" id="currencyValue" value="{{$currency->value}}">
                                                     <input type="hidden" name="converted_amount" value="{{$cal->totalConverted ?? '00.0'}}">
                                                     <tr>
+                                                        
                                                         <td colspan="3"><strong>Total Converted</strong></td>
                                                         <td class="text-right">
-                                                            <strong>ƒ {{$cal->totalConverted ?? '00.0'}} ANG</strong>
+                                                            <strong>ƒ <span id="totalConverted">{{$cal->totalConverted ?? '00.0'}}</span> ANG</strong>
                                                         </td>
                                                     </tr>
                                                     @else
@@ -632,19 +641,51 @@ success: function(response){
     if(response.discount)
     {
         console.log(response.discount);
+       
         $('.discvalue').text(`-${response.discount}%`);
         $('.CreatedDisc').text(`-${response.discount}%`);
         $('.CreatedDisc').val(response.discount);
         $('#createDiscount').modal('hide');
+        handleEditInputs();
     }
 },
 error: function(xhr,status,error)
 {
     console.log('Ajax Error in Create Discount');
 }
-});
+
 });
 
+});
+
+$('.editAble_inputs').blur(handleEditInputs);
+ function handleEditInputs(){
+    var old_Tax = $('#old_tax').val();
+    var old_Shipping = $('#old_shipping_price').val();
+    var subtotal = $('#subtotal').val();
+    var currencyValue =  $('#currencyValue').val();
+    var newTaxPrice = $('#New_shipping_price_input').val();
+    var newShippingPrice = $('#New_tax_price_input').val();
+    var discVal = $('#OrderDiscount').val();
+    var CalcOld = parseFloat(subtotal) - (parseFloat(old_Shipping) + parseFloat(old_Tax));
+    var itemPrice = CalcOld + (parseFloat(newShippingPrice) + parseFloat(newTaxPrice));
+    var paypalFee = (itemPrice * 4.62 / 100) + 0.3;
+        var adminfee = itemPrice + paypalFee + 3.1;
+        var eGaroshiTax = adminfee;
+        var tenorderFee = (adminfee * 1.1) + 2;
+        
+    $('#paypalFee').text(paypalFee.toFixed(2));
+    $('#total').text(itemPrice.toFixed(2));
+    $('#adminFee').text(adminfee.toFixed(3));
+    $('#orderFee').text(tenorderFee.toFixed(2));
+
+    var percent = (tenorderFee * discVal) / 100;
+        var total = tenorderFee - percent;
+        var total_Converted = total * currencyValue;
+        $('#totalConverted').text(total_Converted.toFixed(3));
+        // $total_Converted = number_format($total_Converted, 2);
+
+}
 
 
 
