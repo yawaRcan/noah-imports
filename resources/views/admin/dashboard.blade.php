@@ -404,7 +404,6 @@
                                 <th>Reciever</th>
                                 <th>Order Status</th>
                                 <th>Total Amount</th>
-                            </thead>
                             <tbody>
                                 @forelse($data['latest_orders'] as $order)
                                 <tr>

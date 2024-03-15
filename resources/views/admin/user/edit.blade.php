@@ -20,8 +20,8 @@
         <label>Gender</label>
          <select name="gender" class="form-control" id="gender_id" >
           <option value="">Select Gender</option>
-          <option value="0" {{$User->gender == 0 ? 'selected': ''}}>Male</option>
-          <option value="1" {{$User->gender == 1 ? 'selected': ''}}>Female</option>
+          <option value="1" {{$User->gender == 1 ? 'selected': ''}}>Male</option>
+          <option value="0" {{$User->gender == 0 ? 'selected': ''}}>Female</option>
       </select>
     </div>
     <div class="mb-3">

@@ -137,6 +137,7 @@ class UserController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        // dd($request->gender);
         ini_set('max_execution_time', 500);
         ini_set('memory_limit', '700M');
         $admin = Admin::findOrFail(\Auth::guard('admin')->id());
