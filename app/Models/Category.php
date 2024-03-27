@@ -9,8 +9,8 @@ class Category extends Model
 {
     use HasFactory;
 
-    public function user() 
+    public function admins()
     {
-        return $this->belongsTo(User::class, 'added_by');
-    } 
+        return $this->belongsTo(Admin::class, 'added_by');
+    }
 }

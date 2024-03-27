@@ -1,5 +1,7 @@
 <?php
 
+use App\Events\Scrapping;
+use App\Events\ScrappingAmazone;
 use App\Http\Controllers\admin\CreateDiscountController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Http;
@@ -181,6 +183,15 @@ Route::get('/', function () {
     // return;
     return view('welcome');
 });
+Route::get('/admin/scrapping', function () {
+    $url = 'https://www.amazon.com/Kryptall-Unlocked-Cellular-Storage-Capacity/dp/B0CJ8B8XJT/ref=sr_1_2?_encoding=UTF8&content-id=amzn1.sym.061f5f08-3bb1-4c70-8051-5d850a92de53&dib=eyJ2IjoiMSJ9.eGtThlK96Xr8UL8QugiEa5taq02T0xYF1a2FUqdkQL8SE6X-bdDbv0V_yUZs08JgTZizWCpgC-A1_VDC5Xl8m2H4eMNDEY-RV7slcrfGnBN56w5_7hRXuC4RCi61vSkQAXsoHOVicxeUEH-EcJScefr9_HvGSOyuS7DxHYDCnCZ8Ff7rH_YoZ7_StD4PW8rNWw2anJmXhsyvqyUYLbbDFqpWlX5wkAb2GUeDHhp-h_M.zQQK9dJ0jiuaDtKjoPo9o988OMQlphitep36f5GnDhU&dib_tag=se&keywords=smartphones&pd_rd_r=5cf41a3a-faa0-4f96-852d-f036801fc68b&pd_rd_w=hZFFV&pd_rd_wg=kjcuL&pf_rd_p=061f5f08-3bb1-4c70-8051-5d850a92de53&pf_rd_r=EGDGPMPH8D1JN3BW11EE&qid=1710840927&sr=8-2';
+    $event = event(new Scrapping($url, 'Amazone'));
+    // Artisan::call('app:run-pupeeter');
+    // $n = session::get('h');
+    // dd($n);
+
+
+});
 
 Route::group(
     ['namespace' => 'App\Http\Controllers\Admin', 'middleware' => 'auth:admin'],
@@ -352,6 +363,8 @@ Route::group(
                     Route::get('/order/pending', 'pendingOrders')->name('order.pendingOrders');
                     Route::get('/pending/order', 'pendingOrder')->name('pending.order');
                     Route::get('/order/create', 'create')->name('create');
+                    Route::post('/update-TaxShipUpdate-data', 'TaxShipUpdate')->name('TaxShipUpdate');
+
                     Route::get('/order/create/item', 'createItem')->name('create.item');
                     Route::get('/order/edit/{id}', 'edit')->name('order.edit');
                     Route::put('/order/update/{id}', 'update')->name('order.update');

@@ -27,7 +27,7 @@ trait CartCalculation
     public function generateOrderID()
     {
         return rand(10000000, 99999999) . substr(strtotime("now"), 8, 10);
-    } 
+    }
 
     //fetch product from cart
     public function fetchCart($code)
@@ -65,39 +65,38 @@ trait CartCalculation
     public function getSubTotal($format = false)
     {
         $sum = 0;
-       
-        foreach ($this->products as $item) { 
+
+        foreach ($this->products as $item) {
             $sum += $item->price * $item->quantity;
-          
+
         }
         // dd(doubleval(intval($this->getShipping(true)) + intval($this->getTax(true))));
         $sum += doubleval(intval($this->getShipping(true)) + intval($this->getTax(true)));
         return $format ? number_format($sum, 2) : $sum;
     }
 
-        //calculate Total Shiping
-        public function getShipping($format = false)
-        {
-            $sum = 0;
-           
-            foreach ($this->products as $item) {    
+    //calculate Total Shiping
+    public function getShipping($format = false)
+    {
+        $sum = 0;
 
-                    $sum += $item->shipping_price; 
-                
-            }
-            return $format ? number_format($sum, 2) : $sum;
+        foreach ($this->products as $item) {
+            $sum += $item->shipping_price;
+            // dump($sum);
         }
+        return $format ? number_format($sum, 2) : $sum;
+    }
 
-        //calculate Total Shiping
-        public function getTax($format = false)
-        {
-            $sum = 0;
-            
-            foreach ($this->products as $item) { 
-                $sum += $item->tax;
-            }
-            return $format ? number_format($sum, 2) : $sum;
+    //calculate Total Shiping
+    public function getTax($format = false)
+    {
+        $sum = 0;
+
+        foreach ($this->products as $item) {
+            $sum += $item->tax;
         }
+        return $format ? number_format($sum, 2) : $sum;
+    }
 
     //paypal fee 
     public function paypalFee($format = false)
@@ -116,12 +115,14 @@ trait CartCalculation
     //10% order fee
     public function tenOrderFee($discount = 0, $type = 'private', $format = false)
     {
+        // dd($discount);
         $cal = ($this->adminFee() * 1.1) + 2;
         $percent = ($cal * $discount) / 100;
         $total = $cal - $percent;
 
         if ($type == 'private') {
-            return $format ? number_format($cal, 2) : $cal;
+            return $format ? number_format($cal, 2) : $total;
+            // dd($total);
         } else {
             return $format ? number_format($total, 2) : $total;
         }
@@ -143,19 +144,22 @@ trait CartCalculation
     }
 
     //calculate total from selected currency of shopping
-    public function total($format = false)
+    public function total($format = false, $discount = null)
     {
-        return $format ? number_format($this->tenOrderFee(), 2) : $this->tenOrderFee();
+
+
+        return $format ? number_format($this->tenOrderFee($discount), 2) : $this->tenOrderFee($discount);
     }
 
     //calculate total from selected currency of shopping
     public function totalDiscounted($discount, $type = 'public', $format = false)
     {
+
         return $format ? number_format($this->tenOrderFee($discount, $type), 2) : $this->tenOrderFee($discount, $type);
     }
 
     //calculate total from coverted currency
-    private function totalConverted($currency, $format = false)
+    private function totalConverted($currency, $format = false, $discount = null)
     {
         //getting the cart currency with value
         $getCartCurrency = $this->getCurrency($currency)->value;
@@ -167,7 +171,8 @@ trait CartCalculation
         // if ($currency == 1) {
         //     $cal = $this->total();
         // } else {
-            $cal = $this->total() * $getCartCurrency;
+        $cal = $this->total(false, $discount) * $getCartCurrency;
+
         // }
 
         return $format ? number_format($cal, 2) : $cal;
@@ -198,10 +203,10 @@ trait CartCalculation
     }
 
     function getCurrency($currency)
-    { 
-        $currency = Currency::findOrFail($currency); 
-        
-       return $currency; 
-        
+    {
+        $currency = Currency::findOrFail($currency);
+
+        return $currency;
+
     }
 }

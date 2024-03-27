@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Jobs\AmazoneScrape;
 use App\Models\User;
 use App\Models\Admin;
 use App\Models\Order;
@@ -38,6 +39,9 @@ use App\Http\Requests\Admin\OrderPayment\UpdatePaymentRequest;
 use App\Http\Requests\Admin\OrderPaymentCharge\StoreChargeRequest;
 use App\Http\Requests\Admin\OrderPaymentCharge\UpdateChargeRequest;
 use App\Models\Currency;
+use Symfony\Component\BrowserKit\Cookie;
+use Nesk\Puphpeteer\Puppeteer;
+use Nesk\Rialto\Data\JsFunction;
 
 class OrderController extends Controller
 {
@@ -85,14 +89,16 @@ class OrderController extends Controller
 
             $parts = parse_url($url);
 
-            if (isset($parts['scheme']) && isset($parts['host'])) {
+            if (isset ($parts['scheme']) && isset ($parts['host'])) {
 
                 $mainLink = $parts['scheme'] . "://" . $parts['host'];
+
             } else {
 
                 return [];
             }
             $matchScores = array();
+            similar_text($mainLink, "https://www.aliexpress.com", $aliScore);
 
             similar_text($mainLink, 'https://www.ebay.com', $ebayScore);
 
@@ -107,10 +113,14 @@ class OrderController extends Controller
             similar_text($mainLink, "https://www.temu.com", $temuScore);
 
             similar_text($mainLink, "https://www.shein.com", $sheinScore);
+            similar_text($mainLink, "https://www.fashionnova.com", $FashionNovaScore);
 
 
 
             similar_text($mainLink, $mainLink, $normalScore);
+
+            $matchScores['aliStr'] = $aliScore;
+
             $matchScores['ebayStr'] = $ebayScore;
 
             $matchScores['amazonStr'] = $amazonScore;
@@ -125,12 +135,14 @@ class OrderController extends Controller
 
             $matchScores['sheinStr'] = $sheinScore;
 
+            $matchScores['FashionNovaStr'] = $FashionNovaScore;
+
+
             $matchScores['normalStr'] = $normalScore;
 
             arsort($matchScores); // Sort the match scores in descending order
 
             $mostMatchedString = key($matchScores); // Get the key (string) with the highest match score
-
             if ($mostMatchedString === 'ebayStr') {
 
                 $imageUrls = $this->extractEbay($url);
@@ -152,6 +164,11 @@ class OrderController extends Controller
             } elseif ($mostMatchedString === 'sheinStr') {
 
                 $imageUrls = $this->extractShein($url);
+            } elseif ($mostMatchedString === 'FashionNovaStr') {
+
+                $imageUrls = $this->extractFashionNova($url);
+            } elseif ($mostMatchedString === 'aliStr') {
+                $imageUrls = $this->extractaliExpress($url);
             } elseif ($mostMatchedString === 'normalStr') {
 
                 if (!$imageUrls) {
@@ -411,7 +428,68 @@ class OrderController extends Controller
 
         return $imageUrls;
     }
+    function extractaliExpress($url)
+    {
+        $client = new \Goutte\Client();
 
+        $parsedUrl = parse_url($url);
+
+        $host = $parsedUrl['host'];
+
+        $domainParts = explode('.', $host);
+
+        $domain = $domainParts[count($domainParts) - 2];
+
+        $imageUrls['website'] = $domain;
+        $crawler = $client->request('GET', $url);
+        $title = $crawler->filter('meta[property="og:title"]')->first();
+        $Parts = explode("|", $title->attr('content'));
+        $pattern = '/([\d\.]+)([A-Za-z]+)/';
+        if (preg_match($pattern, $Parts[0], $matches)) {
+            $currency = $matches[2];
+            $imageUrls['currency'] = $currency;
+        }
+        $imageUrls['price'] = $Parts[0];
+        $imageUrls['title'] = $Parts[1] . '|' . $Parts[2];
+        $imageElements = $crawler->filter('meta[property="og:image"]');
+        $imageUrl = $imageElements->attr('content');
+        $imageUrls['images'][] = $imageUrl;
+
+        return $imageUrls;
+    }
+    function extractFashionNova($url)
+    {
+        $client = new \Goutte\Client();
+
+        $parsedUrl = parse_url($url);
+
+        $host = $parsedUrl['host'];
+
+        $domainParts = explode('.', $host);
+
+        $domain = $domainParts[count($domainParts) - 2];
+
+        $imageUrls['website'] = $domain;
+
+        $crawler = $client->request('GET', $url);
+        $title = $crawler->filter('.product-info__title-line h1')->first();
+        $currency = $crawler->filter('.product-info__price-line span')->first();
+        $price = $crawler->filter('.product-info__price span')->first();
+        $imageUrls['title'] = $title->text();
+        $imageUrls['price'] = $price->text();
+        $imageUrls['currency'] = $currency->text();
+        // $size = "Please select Size";
+        // $quantity = $crawler->filter('.d-quantity__value .d-quantity__wrapper .textbox__control')->first();
+        $imageElements = $crawler->filter('meta[property="og:image"]');
+        $imageElements->each(function ($element) use (&$imageUrls) {
+            $imageUrl = $element->attr('content');
+            $imageUrls['images'][] = $imageUrl;
+
+        });
+
+
+        return $imageUrls;
+    }
     function extractEbay($url)
     {
         $client = new \Goutte\Client();
@@ -447,7 +525,7 @@ class OrderController extends Controller
             $imageUrls['item_number'][] = $element->text();
         });
 
-        if (!empty($imageUrls['item_number'])) {
+        if (!empty ($imageUrls['item_number'])) {
             $imageUrls['item_number'] = $imageUrls['item_number'][1];
         } else {
             $imageUrls['item_number'] = 0;
@@ -523,9 +601,9 @@ class OrderController extends Controller
 
     function extractShein($url)
     {
+        // $client->setHeader('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36');
 
         $client = new \Goutte\Client();
-
         $parsedUrl = parse_url($url);
 
         $host = $parsedUrl['host'];
@@ -641,9 +719,8 @@ class OrderController extends Controller
 
     function extractAmazon($url)
     {
-
-        $client = new \Goutte\Client();
-
+        ini_set('max_execution_time', 400);
+        ini_set('memory_limit', '700M');
         $parsedUrl = parse_url($url);
 
         $host = $parsedUrl['host'];
@@ -653,28 +730,26 @@ class OrderController extends Controller
         $domain = $domainParts[count($domainParts) - 2];
 
         $imageUrls['website'] = $domain;
-
-        $crawler = $client->request('GET', $url);
-
-        $title = $crawler->filter('.a-section .a-spacing-none .a-size-large .a-spacing-none .a-color-secondary span')->first();
-
-        $imageUrls['title'] = $title->text();
-
-        $imageElements = $crawler->filter('span span span img');
-
-        $imageElements->each(function (Crawler $element) use (&$imageUrls) {
-
-            // $element = $element->filter('img');
-            $imageUrl = $element->attr('src');
-
-            $extension = pathinfo($imageUrl, PATHINFO_EXTENSION);
-
-            if (in_array($extension, ['jpeg', 'jpg', 'png', 'webp'])) {
-                $imageUrls['images'][] = $imageUrl;
-            }
-        });
+        // $my_execute = 'node C:\wamp64\www\noah-imports\app\NodeJs\index.js ' . $url;
+        $output = exec('node C:\wamp64\www\noah-imports\app\NodeJs\index.js ' . $url);
+        $productArry = json_decode($output, true);
+        $Setprices = explode("\n", $productArry["price"]);
+        $prices = $Setprices['0'];
+        if ($productArry["priceRange"]) {
+            $rangeArr = explode('$', $productArry["priceRange"]);
+            $priceL = intval($rangeArr[1]);
+            $priceH = intval($rangeArr[3]);
+            $prices = $priceL;
+        }
+        $priceL = null;
+        $priceH = null;
+        $imageUrls["priceRange"] = $priceL . '-' . $priceH;
+        $imageUrls["title"] = $productArry["title"];
+        $imageUrls['price'] = $prices;
+        $imageUrls["images"][] = $productArry["imageSrc"];
 
         return $imageUrls;
+
     }
 
     function extractWalMart($url)
@@ -744,9 +819,9 @@ class OrderController extends Controller
         if (count($cartData) > 0) {
             $this->products = Purchase::where(['user_id' => $userId, 'status' => 0])->get();
 
-            if (isset($this->products[0]) && !is_null($this->products)) {
+            if (isset ($this->products[0]) && !is_null($this->products)) {
                 $serviceFee = $this->serviceChargeFee(true);
-                $cal = (object) $this->calc();
+                $cal = (object) $this->calc($discount = 0);
             }
 
             return view('admin.purchasing.create', compact('serviceFee', 'cartData', 'paymentMethods', 'users', 'userId', 'cal'));
@@ -827,7 +902,7 @@ class OrderController extends Controller
             $charge = new OrderPayment();
             $charge->order_id = $request->order_id;
             $charge->payment_id = $request->payment_method;
-            if (isset($request->payment_receipt)) {
+            if (isset ($request->payment_receipt)) {
                 $charge->payment_invoice = $this->fileUpload($request->payment_receipt, $charge->payment_invoice);
             }
             $charge->paid_amount = $paidAmount;
@@ -944,16 +1019,17 @@ class OrderController extends Controller
     }
 
 
-    public function calc()
+    public function calc($discount = null)
     {
+
         return [
             'shipping' => $this->getShipping(true),
             'tax' => $this->getTax(true),
             'total' => $this->getSubTotal(true),
             'paypal' => $this->paypalFee(true),
-            'tenOrderFee' => $this->tenOrderFee(0, 'public', true),
+            'tenOrderFee' => $this->tenOrderFee(intval($discount), 'public', true),
             'adminFee' => $this->adminFee(true),
-            'totalConverted' => $this->totalConverted($this->products[0]->currency_id, true),
+            'totalConverted' => $this->totalConverted($this->products[0]->currency_id, true, intval($discount)),
         ];
     }
 
@@ -971,20 +1047,52 @@ class OrderController extends Controller
         ];
         return $notify;
     }
-
-
-    public function getCardData($userId)
+    public function TaxShipUpdate(Request $request)
     {
+        $user_id = $request->User_Id;
+        $discount = $request->discount;
+
+        $purchase = Purchase::where(['user_id' => $request->User_Id, 'status' => 0])->update([
+            'shipping_price' => $request->newTaxPrice,
+            'tax' => $request->newShippingPrice
+        ]);
+        $html = $this->getCardData($user_id, $discount);
+        $notify = [
+            'success' => "Shipping and tax calculated successfully.",
+            'redirect' => route('purchasing.get.cart'),
+            'html' => $html,
+        ];
+        return $notify;
+        // $cartData = PurchaseCart::with('purchase', 'user')->where('user_id', $request->User_Id)->get();
+        // $this->products = Purchase::where(['user_id' => $request->User_Id, 'status' => 0])->get();
+        // $paymentMethods = Payment::orderBy('name', 'ASC')->get();
+        // if (count($this->products) > 0) {
+        //     $cal = (object) $this->calc();
+        //     // dd($cal);
+        // } else
+        //     $cal = null;
+
+        // return view('admin.purchasing.cart', compact('cartData', 'paymentMethods', 'cal', 'user_id'))->render();
+
+        // Handle case where no records were updated
+    }
+    public function getCardData($userId, $discount = 0)
+    {
+        $user_id = $userId;
         $cartData = PurchaseCart::with('purchase', 'user')->where('user_id', $userId)->get();
         $this->products = Purchase::where(['user_id' => $userId, 'status' => 0])->get();
         $paymentMethods = Payment::orderBy('name', 'ASC')->get();
-        if (count($this->products) > 0)
-            $cal = (object) $this->calc();
-        else
+        if (count($this->products) > 0) {
+            $cal = (object) $this->calc($discount);
+
+        } else
             $cal = null;
 
-        return view('admin.purchasing.cart', compact('cartData', 'paymentMethods', 'cal'))->render();
+        return view('admin.purchasing.cart', compact('cartData', 'paymentMethods', 'cal', 'user_id'))->render();
     }
+
+
+
 
     public function editCardData(Request $request)
     {
@@ -1033,8 +1141,8 @@ class OrderController extends Controller
     {
         // dd($request);
 
-
         $CalcOld = intval($request->subtotal) - (intval($request->old_shipping_price) + intval($request->old_tax));
+        // dd($CalcOld);
         $getsubtotal = $CalcOld + ((intval($request->shipping_price)) + intval(($request->tax)));
         $paypalFee = ($getsubtotal * 4.62 / 100) + 0.3;
         $adminfee = $getsubtotal + $paypalFee + 3.1;
@@ -1044,7 +1152,7 @@ class OrderController extends Controller
         //tenOrderFess
         $cal = ($adminfee * 1.1) + 2;
         if ($request->discountCheck) {
-            $discountA = isset($request->discountA) ? intval($request->discountA) : 0;
+            $discountA = isset ($request->discountA) ? intval($request->discountA) : 0;
         } else {
             $discountA = 0;
         }
@@ -1054,7 +1162,7 @@ class OrderController extends Controller
         $currency = Currency::findOrFail($request->currency_id);
         $total_Converted = $total * $currency->value;
         $total_Converted = number_format($total_Converted, 2);
-        $discountA = isset($request->discountA) ? intval($request->discountA) : 0;
+        $discountA = isset ($request->discountA) ? intval($request->discountA) : 0;
         // dd($total_Converted); 
         $paymentStatuses = PaymentStatus::all();
         $user = User::findOrFail($request->user_id);
@@ -1190,7 +1298,7 @@ class OrderController extends Controller
                 $balanceFlag = 1;
             }
         }
-        if (isset($request->payment_receipt)) {
+        if (isset ($request->payment_receipt)) {
             $order->payment_receipt = $this->fileUpload($request->payment_receipt, $order->payment_receipt);
         }
         $order->payment_id = $request->payment_method_id;
@@ -1235,7 +1343,7 @@ class OrderController extends Controller
 
     public function fileUpload($file, $oldFile = null)
     {
-        if (isset($file)) {
+        if (isset ($file)) {
             $fileFormats = ['image/jpeg', 'image/png', 'image/gif', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/pdf', 'text/plain'];
             if (!in_array($file->getClientMimeType(), $fileFormats)) {
                 // return Reply::error('This file format not allowed');
@@ -1286,7 +1394,7 @@ class OrderController extends Controller
         $order = Order::with('deliveryStatus')->findOrFail($id);
         $order->courier = $request->courier;
 
-        if (isset($request->delivery_status) && $order->delivery_status != $request->delivery_status) {
+        if (isset ($request->delivery_status) && $order->delivery_status != $request->delivery_status) {
 
             $order->delivery_status = $request->delivery_status;
 
@@ -1311,7 +1419,7 @@ class OrderController extends Controller
 
         $user = User::findOrFail($order->user_id);
 
-        if (isset($request->delivery_status) && $statusFlag == 1) {
+        if (isset ($request->delivery_status) && $statusFlag == 1) {
 
 
             $template = EmailTemplate::where('slug', 'purchase-order-status')->first();
@@ -1339,14 +1447,14 @@ class OrderController extends Controller
             }
         }
 
-        if (isset($order) && isset($order->tracking)) {
+        if (isset ($order) && isset ($order->tracking)) {
 
             $this->addParcel($order);
         }
 
         $admin = Admin::first();
 
-        if (isset($request->send_invoice)) {
+        if (isset ($request->send_invoice)) {
             $user = User::findOrFail($order->user_id);
 
             $template = EmailTemplate::where('slug', 'purchase-order-update')->first();
@@ -1523,13 +1631,13 @@ class OrderController extends Controller
     {
 
 
-        if (isset($request->user_id) && $request->user_id != '' && $request->user_id != null) {
+        if (isset ($request->user_id) && $request->user_id != '' && $request->user_id != null) {
 
             $data = Order::where('user_id', $request->user_id);
 
             $data = $data->get();
 
-        } else if (isset($request->status) && $request->status != '' && $request->status != null) {
+        } else if (isset ($request->status) && $request->status != '' && $request->status != null) {
 
             $data = Order::where('status', $request->status);
             if ($request->statusvalue == "pending-order") {
@@ -1635,7 +1743,7 @@ class OrderController extends Controller
         $orderCount = Parcel::whereHasMorph('orderable', [Order::class])
             ->where('orderable_id', $order->id)->count();
 
-        if (isset($order->tracking) && $orderCount == 0) {
+        if (isset ($order->tracking) && $orderCount == 0) {
 
             $parcels = new Parcel();
 
@@ -1681,9 +1789,9 @@ class OrderController extends Controller
 
             $parcels->dimension = 0;
 
-            $parcels->item_value = (isset($order->total) ? $order->total : 0);
+            $parcels->item_value = (isset ($order->total) ? $order->total : 0);
 
-            $parcels->reciever_address_id = (isset($order->shipping_address_id) ? $order->shipping_address_id : null);
+            $parcels->reciever_address_id = (isset ($order->shipping_address_id) ? $order->shipping_address_id : null);
 
             $parcels->orderable_id = $order->id;
 
@@ -1734,7 +1842,7 @@ class OrderController extends Controller
         $purchase = Purchase::findOrFail($request->purchase_id);
         $order = Order::findOrFail($request->order_id);
 
-        if (isset($request->tracking) && $parcelCount == 0) {
+        if (isset ($request->tracking) && $parcelCount == 0) {
 
             $id = Parcel::orderBy('id', 'desc')->pluck('id')->first();
 
@@ -1799,7 +1907,7 @@ class OrderController extends Controller
 
             $parcels->dimension = 0;
 
-            $parcels->reciever_address_id = (isset($order->shipping_address_id) ? $order->shipping_address_id : null);
+            $parcels->reciever_address_id = (isset ($order->shipping_address_id) ? $order->shipping_address_id : null);
 
             $parcels->item_value = $purchase->price;
 
@@ -1897,12 +2005,12 @@ class OrderController extends Controller
         $itemNumber = @$product['item_number'];
         $imageUrls = $product['images'];
 
-        if (isset($product['currency'])) {
+        if (isset ($product['currency'])) {
             $currency = $product['currency'];
         } else {
             $currency = 'USD';
         }
-        if (isset($product['size']) && isset($product['quantity'])) {
+        if (isset ($product['size']) && isset ($product['quantity'])) {
             $size = $product['size'];
             $quantity = $product['quantity'];
         } else {
@@ -1910,8 +2018,7 @@ class OrderController extends Controller
             $quantity = null;
 
         }
-        if (count($imageUrls) > 0) {
-
+        if (!empty ($imageUrls)) {
             $html = view('admin.purchasing.product_images', compact('imageUrls', 'title', 'website', 'price', 'itemNumber', 'size', 'quantity', 'currency'))->render();
             $notify = ['success' => "Product images fetched successfully", 'html' => $html];
         } else {

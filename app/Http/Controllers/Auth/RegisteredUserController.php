@@ -112,6 +112,9 @@ class RegisteredUserController extends Controller
                 'addressline2' => $branch->address,
                 'branchcountry' => $branch->country,
                 'branchstate' => $branch->state,
+                'branchCity' => $branch->city,
+                'brachZipcode' => $branch->zipcode,
+                'pickup_fee' => $branch->pickup_fee,
                 'branchphone' => $branch->phone
 
             ];

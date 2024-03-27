@@ -26,21 +26,17 @@ class OrderListener
      */
     public function handle(OrderEvent $event): void
     {
-        if($event->eventName == 'CreateOrder')
-        {
-            Notification::send($event->notifiable, new CreateOrderNotification($event->template,$event->shortCodes,$event->order));
+        if ($event->eventName == 'CreateOrder') {
+            Notification::send($event->notifiable, new CreateOrderNotification($event->template, $event->shortCodes, $event->order));
         }
-        if($event->eventName == 'UpdateOrder')
-        {
-            Notification::send($event->notifiable, new UpdateOrderNotification($event->template,$event->shortCodes,$event->order));
+        if ($event->eventName == 'UpdateOrder') {
+            Notification::send($event->notifiable, new UpdateOrderNotification($event->template, $event->shortCodes, $event->order));
         }
-        if($event->eventName == 'OrderStatus')
-        {
-            Notification::send($event->notifiable, new OrderStatusNotification($event->template,$event->shortCodes,$event->order));
+        if ($event->eventName == 'OrderStatus') {
+            Notification::send($event->notifiable, new OrderStatusNotification($event->template, $event->shortCodes, $event->order));
         }
-        if($event->eventName == 'OrderPaymentStatus')
-        {
-            Notification::send($event->notifiable, new OrderPaymentStatusNotification($event->template,$event->shortCodes,$event->order));
+        if ($event->eventName == 'OrderPaymentStatus') {
+            Notification::send($event->notifiable, new OrderPaymentStatusNotification($event->template, $event->shortCodes, $event->order));
         }
     }
 }

@@ -312,6 +312,7 @@
                                                 <div class="col-md-6">
                                                     <div class="mb-3 row">
                                                         <label for="tb-rfname">Product Price</label>
+                                                        <p class="text-muted text-end m-0 " id="Pricerange">Price Range <span class="rangeValue"></span></p>
                                                         <div class="col-md-3">
                                                             <select class="form-control" name="currency_id">
                                                                 @foreach($currencies as $currency)
@@ -324,6 +325,7 @@
                                                             </select>
                                                         </div>
                                                         <div class="col-md-9">
+                                                            
                                                             <input id="price" class="form-control" type="number" name="price" id="price" step="0.01" placeholder="Enter product price here" />
                                                         </div>
                                                     </div>
@@ -426,6 +428,7 @@
                                                     @if(isset($cartData[0]) && !is_null($cartData))
                                                     @foreach($cartData as $details)
                                                     <input type="hidden" name="purchase_id[]" value="{{ $details->purchase_id }}">
+                                                    <input type="hidden" id="User_Id" value="{{$details->user_id}}">
                                                     <tr data-id="{{ $details->purchase_id }}">
                                                         <td>{{ $details->purchase->name ?? 'N/A' }}</td>
                                                         <td>{{ $details->purchase->description ?? 'N/A' }}</td>
@@ -535,7 +538,7 @@
                                                     <input type="hidden" name="converted_amount" value="{{$cal->totalConverted ?? '00.0'}}">
                                                     <tr>
                                                         
-                                                        <td colspan="3"><strong>Total Converted</strong></td>
+                                                        <td colspan="3"><strong>Total Converted </strong></td>
                                                         <td class="text-right">
                                                             <strong>ƒ <span id="totalConverted">{{$cal->totalConverted ?? '00.0'}}</span> ANG</strong>
                                                         </td>
@@ -578,11 +581,8 @@
         </div>
         <form>
         <div class="modal-body">
-          
-            
                 <label>Discount</label>
                 <input type="number" class="form-control"id='OrderDiscount' name="OrderDiscount" >
-           
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -646,7 +646,7 @@ success: function(response){
         $('.CreatedDisc').text(`-${response.discount}%`);
         $('.CreatedDisc').val(response.discount);
         $('#createDiscount').modal('hide');
-        handleEditInputs();
+        // handleEditInputs();
     }
 },
 error: function(xhr,status,error)
@@ -660,30 +660,89 @@ error: function(xhr,status,error)
 
 $('.editAble_inputs').blur(handleEditInputs);
  function handleEditInputs(){
-    var old_Tax = $('#old_tax').val();
-    var old_Shipping = $('#old_shipping_price').val();
-    var subtotal = $('#subtotal').val();
-    var currencyValue =  $('#currencyValue').val();
-    var newTaxPrice = $('#New_shipping_price_input').val();
-    var newShippingPrice = $('#New_tax_price_input').val();
-    var discVal = $('#OrderDiscount').val();
-    var CalcOld = parseFloat(subtotal) - (parseFloat(old_Shipping) + parseFloat(old_Tax));
-    var itemPrice = CalcOld + (parseFloat(newShippingPrice) + parseFloat(newTaxPrice));
-    var paypalFee = (itemPrice * 4.62 / 100) + 0.3;
-        var adminfee = itemPrice + paypalFee + 3.1;
-        var eGaroshiTax = adminfee;
-        var tenorderFee = (adminfee * 1.1) + 2;
-        
-    $('#paypalFee').text(paypalFee.toFixed(2));
-    $('#total').text(itemPrice.toFixed(2));
-    $('#adminFee').text(adminfee.toFixed(3));
-    $('#orderFee').text(tenorderFee.toFixed(2));
+    let User_Id = $('#User_Id').val();
+    let newTaxPrice = $('#New_shipping_price_input').val();
+    let newShippingPrice = $('#New_tax_price_input').val();
+    let discount = $('.CreatedDisc').val();
+    console.log('discount', discount);
+    // console.log('shipping', newShippingPrice);
 
-    var percent = (tenorderFee * discVal) / 100;
-        var total = tenorderFee - percent;
-        var total_Converted = total * currencyValue;
-        $('#totalConverted').text(total_Converted.toFixed(3));
-        // $total_Converted = number_format($total_Converted, 2);
+    let formData = new FormData();
+    formData.append('User_Id', User_Id);
+    formData.append('newTaxPrice', newTaxPrice);
+    formData.append('newShippingPrice', newShippingPrice);
+    formData.append('discount',discount)
+    var request;
+    setTimeout(function(){
+    request = $.ajax({
+            url: "{{route('purchasing.TaxShipUpdate')}}",
+            method: "POST",
+            headers: {
+                'X-CSRF-TOKEN': "{{csrf_token()}}"
+            },
+            processData: false,
+            contentType: false,
+            data: formData,
+        });
+   
+        // Ajaxt on Done Section here
+        request.done(function(response) {
+
+            if (response.success) {
+                // location.reload();
+                notify('success', response.success);
+            }
+
+            if (response.html) {
+                $('#order').removeClass('active');
+                $('#cart').addClass('active');
+                $('#cart-tbody').html(response.html);
+                $('#cart').focus();
+                // location.reload();
+            }
+
+        }); },5000);
+    // var old_Tax = $('#old_tax').val();
+    // console.log(old_Tax);
+    // let old_Shipping = $('#old_shipping_price').val();
+    // console.log(old_Shipping);
+    // var subtotal = $('#subtotal').val();
+    // console.log(subtotal);
+
+    // var currencyValue =  $('#currencyValue').val();
+    // console.log('new data');
+
+    // var newTaxPrice = $('#New_shipping_price_input').val();
+    // var newShippingPrice = $('#New_tax_price_input').val();
+    // console.log('new tax',newTaxPrice);
+    // console.log('shipmet',newShippingPrice);
+
+    // var discVal = $('#OrderDiscount').val();
+    // var CalcOld = parseFloat(subtotal) - (parseFloat(old_Shipping) + parseFloat(old_Tax));
+    // console.log('oldTax + oldshipping' + old_Tax + ' ' + old_Shipping + ' ' + parseFloat(subtotal));
+    // console.log(CalcOld);
+    // console.log('find new item price');
+    // var itemPrice = CalcOld + (parseFloat(newShippingPrice) + parseFloat(newTaxPrice));
+    // console.log(newShippingPrice + ' ' + newTaxPrice + ' calcold=' + CalcOld);
+    // console.log(itemPrice);
+
+    // var paypalFee = (itemPrice * 4.62 / 100) + 0.3;
+    //     var adminfee = itemPrice + paypalFee + 3.1;
+    //     var eGaroshiTax = adminfee;
+    //     var tenorderFee = (adminfee * 1.1) + 2;
+        
+    // $('#paypalFee').text(paypalFee.toFixed(2));
+    // $('#total').text(itemPrice.toFixed(2));
+    // $('#adminFee').text(adminfee.toFixed(3));
+    // $('#orderFee').text(tenorderFee.toFixed(2));
+
+    // var percent = (tenorderFee * discVal) / 100;
+    //     var total = tenorderFee - percent;
+    //     var total_Converted = total * currencyValue;
+    //     let totalConvertedOld = $('#totalConverted').text();
+    //     console.log('old total converted', totalConvertedOld);
+    //     $('#totalConverted').text(total_Converted.toFixed(3));
+    //     $total_Converted = number_format($total_Converted, 2);
 
 }
 
@@ -903,7 +962,7 @@ $('.editAble_inputs').blur(handleEditInputs);
     $(document).on('blur', "#name", function() {
 
         let site_url = $(this).val();
-        if (site_url) {
+       if (site_url) {
             $('#ni-product-images').html('');
             $("#website-loader").removeClass('hide');
             var request = $.ajax({

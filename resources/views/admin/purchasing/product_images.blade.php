@@ -58,6 +58,7 @@ $('#size').attr("placeholder","{{$size}}");
 
 
 
+
 selectableImages.forEach((image) => {
   image.addEventListener('click', () => { 
     selectableImages.forEach((img) => {

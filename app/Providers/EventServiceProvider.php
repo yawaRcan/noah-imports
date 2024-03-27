@@ -41,6 +41,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         'App\Events\PasswordReset' => [
             'App\Listeners\PasswordResetNotification',
+        ],
+        'App\Events\Scrapping' => [
+            'App\Listeners\ProcessScrapping',
         ]
     ];
 

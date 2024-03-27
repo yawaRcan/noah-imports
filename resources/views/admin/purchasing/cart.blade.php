@@ -94,7 +94,7 @@
 <tr>
     <td colspan="3"><strong>Total Converted</strong></td>
     <td class="text-right">
-        <strong>ƒ {{$cal->totalConverted ?? '00.0'}} ANG</strong>
+        <strong>ƒ {{$cal->totalConverted ?? '00.0'}} ANG </strong>
     </td>
 </tr>
 @else
